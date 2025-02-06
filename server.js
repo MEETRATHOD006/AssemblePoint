@@ -36,6 +36,10 @@ const upload = multer({ storage });
 const rooms = {}; // Stores room data
 const activeScreenShares = {}; // Global object to store active screen share per room
 
+// Serve the landing page for the root URL
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "landing.html"));
+});
 
 // Create Room
 app.post("/create_room", async (req, res) => {
