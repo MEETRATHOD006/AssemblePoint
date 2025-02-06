@@ -23,27 +23,6 @@ const hideV = document.getElementById("hideV");
 console.log(muteMe)
 console.log(hideV)
 
-videoCallsbtn.addEventListener("click", () => {
-  console.log("videoCall clicked");
-  displayvideocallsDiv.style.display = 'grid';
-  chatsHereDiv.style.display = 'none';
-  // videoCallsbtn.style.backgroundColor = 'rgba(117, 117, 117, 0.342)';
-  // chatsbtn.style.backgroundColor = 'rgba(0, 0, 0, 0)';
-  videoCallsbtn.style.borderBottom = "2px solid orange";
-  chatsbtn.style.borderBottom = "0px solid orange";
-});
-
-chatsbtn.addEventListener("click", () => {
-  console.log("chats clicked");
-  chatsHereDiv.style.display = 'flex';
-  displayvideocallsDiv.style.display = 'none';
-  mainChatDiv.scrollTop = mainChatDiv.scrollHeight;
-  // chatsbtn.style.backgroundColor = 'rgba(117, 117, 117, 0.342)';
-  // videoCallsbtn.style.backgroundColor = 'rgba(0, 0, 0, 0)';
-  chatsbtn.style.borderBottom = "2px solid orange";
-  videoCallsbtn.style.borderBottom = "0px solid orange";
-});
-
 // Connection established
 socket.on("connect", () => {
   console.log("Connected to Socket.IO server with ID:", socket.id);
@@ -197,6 +176,27 @@ if (roomId) {
       individualsVideo.append(blankProfilePic)
     }
   }
+
+  videoCallsbtn.addEventListener("click", () => {
+    console.log("videoCall clicked");
+    displayvideocallsDiv.style.display = 'grid';
+    chatsHereDiv.style.display = 'none';
+    // videoCallsbtn.style.backgroundColor = 'rgba(117, 117, 117, 0.342)';
+    // chatsbtn.style.backgroundColor = 'rgba(0, 0, 0, 0)';
+    videoCallsbtn.style.borderBottom = "2px solid orange";
+    chatsbtn.style.borderBottom = "0px solid orange";
+  });
+  
+  chatsbtn.addEventListener("click", () => {
+    console.log("chats clicked");
+    chatsHereDiv.style.display = 'flex';
+    displayvideocallsDiv.style.display = 'none';
+    mainChatDiv.scrollTop = mainChatDiv.scrollHeight;
+    // chatsbtn.style.backgroundColor = 'rgba(117, 117, 117, 0.342)';
+    // videoCallsbtn.style.backgroundColor = 'rgba(0, 0, 0, 0)';
+    chatsbtn.style.borderBottom = "2px solid orange";
+    videoCallsbtn.style.borderBottom = "0px solid orange";
+  });
 
   muteMe.addEventListener("click", () => {
     console.log("mute clicked");
