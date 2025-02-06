@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assemble Point</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background-color: rgb(17, 22, 29);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+
+        .container {
+            text-align: center;
+            max-width: 600px;
+            padding: 2rem;
+        }
+
+        .popupButtons {
+          height: 40px;
+          border-radius: 5px;
+          border: none;
+          background-color: antiquewhite;
+          cursor: pointer;
+      }
+      
+      .popupInput {
+          background-color: rgb(54 86 123);
+          outline: none;
+          height: 30px;
+          color: white;
+          border: none;
+          border-radius: 5px;
+          padding: 5px;
+          padding-left: 10px;
+          font-size: 15px;
+      }
+      
+      /* Popup styling */
+      #join-popup {
+          display: none;
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background-color: rgba(0, 0, 0, 0.5);
+          justify-content: center;
+          align-items: center;
+          z-index: 9999;
+        }
+        
+        .popup-content {
+          background-color: rgb(17 22 29);
+          padding: 20px;
+          border-radius: 8px;
+          width: 300px;
+          text-align: center;
+          color: white;
+        }
+      
+        #joinRoomId{
+          background-color: rgb(54 86 123);
+          outline: none;
+          height: 30px;
+          color: white;
+          border: none;
+          border-radius: 5px;
+          padding: 5px;
+          padding-left: 10px;
+          font-size: 15px;
+        }
+      
+      #joinRoom {
+          height: 40px;
+          border-radius: 5px;
+          border: none;
+          background-color: antiquewhite;
+          cursor: pointer;
+      }
+      
+      #closePopup {
+          height: 40px;
+          border-radius: 5px;
+          border: none;
+          background-color: antiquewhite;
+          margin-top:15px;
+          width: 60px;
+          cursor: pointer;
+      }
+      
+      #createRoomPopup {
+          display: none;
+          position: fixed;
+          top: 0px;
+          left: 0px;
+          width: 100%;
+          height: 100%;
+          background-color: rgba(0, 0, 0, 0.5);
+          justify-content: center;
+          align-items: center;
+          z-index: 999;
+      }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            margin: 0 auto 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.9);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: rgba(255, 255, 255, 0.95);
+        }
+
+        .button-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            font-size: 1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            font-weight: 500;
+            letter-spacing: 1px;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-join {
+            background-color: rgba(0, 123, 255, 0.1);
+            border-color: rgba(0, 123, 255, 0.3);
+        }
+
+        .btn-join:hover {
+            background-color: rgba(0, 123, 255, 0.2);
+        }
+
+        .footer-text {
+            margin-top: 2rem;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            .btn {
+                padding: 0.8rem 1.5rem;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Popup for Joining -->
+    <div id="join-popup" style="display: none">
+      <div class="popup-content">
+        <h3>Enter Room ID to Join</h3>
+        <input type="text" id="joinRoomId" class="popupInput" placeholder="Enter Room ID" />
+        <button id="joinRoom" class="popupButtons">Join Room</button>
+        <div id="joinError" style="color: red; display: none">
+          Invalid Room ID
+        </div>
+        <button id="closePopup">Close</button>
+      </div>
+    </div>
+
+    <!-- Room Name and Admin Name Popup -->
+    <div id="createRoomPopup" style="display: none">
+      <div class="popup-content">
+        <div style="display: flex;">
+          <label for="roomName">Room Name:</label>
+          <input type="text" id="roomName" class="popupInput" required />
+        </div>
+        <div style="display: flex; margin-top: 20px;">
+          <label for="adminName">Admin Name:</label>
+          <input type="text" id="adminName" class="popupInput" required />
+        </div>
+        <button id="createRoomConfirm" class="popupButtons">Create Room</button>
+        <button id="closeCreateRoomPopup" class="popupButtons" style="margin-top: 15px;">Cancel</button>
+      </div>
+    </div>
+  
+    <div class="container">
+        <div class="logo">A</div>
+        <h1>Assemble Point</h1>
+        <div class="button-container">
+            <button class="btn" id="create">Create Room</button>
+            <button class="btn btn-join" id="join">Join Room</button>
+        </div>
+        <p class="footer-text">© 2023 Assemble Point. All rights reserved.</p>
+    </div>
+  <script type="module" src="script.js"></script>
+</body>
+</html>
