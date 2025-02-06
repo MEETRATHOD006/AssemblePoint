@@ -1,5 +1,5 @@
 // Import Socket.IO client
-const socket = io("https://watch-togethersync.onrender.com"); // Update the URL as per your server
+const socket = io("https://assemblepoint.onrender.com"); // Update the URL as per your server
 
 const peers = {}; // Store peer connections
 let myPeerId = null;  // Store the peer ID
