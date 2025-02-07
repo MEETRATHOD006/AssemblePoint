@@ -194,11 +194,22 @@ if (roomId) {
     videoCallsbtn.style.borderBottom = "0px solid rgba(0, 123, 255, 0.8)";
   });
 
-  // Function to handle photo enlargement
+  // Function to handle photo enlargement with smooth animation
   document.addEventListener('click', function (event) {
       const photoContainer = event.target.closest('.photo-container');
       if (photoContainer) {
-          photoContainer.classList.toggle('enlarged');
+          if (photoContainer.classList.contains('enlarged')) {
+              // Add zoom-out animation
+              photoContainer.style.animation = 'zoomOut 0.3s ease forwards';
+              // Remove the enlarged class after the animation ends
+              photoContainer.addEventListener('animationend', () => {
+                  photoContainer.classList.remove('enlarged');
+                  photoContainer.style.animation = ''; // Reset animation
+              }, { once: true });
+          } else {
+              // Add zoom-in animation
+              photoContainer.classList.add('enlarged');
+          }
       }
   });
 
