@@ -181,10 +181,8 @@ if (roomId) {
     console.log("videoCall clicked");
     displayvideocallsDiv.style.display = 'grid';
     chatsHereDiv.style.display = 'none';
-    // videoCallsbtn.style.backgroundColor = 'rgba(117, 117, 117, 0.342)';
-    // chatsbtn.style.backgroundColor = 'rgba(0, 0, 0, 0)';
-    videoCallsbtn.style.borderBottom = "2px solid orange";
-    chatsbtn.style.borderBottom = "0px solid orange";
+    videoCallsbtn.style.borderBottom = "2px solid rgba(0, 123, 255, 0.8)";
+    chatsbtn.style.borderBottom = "0px solid rgba(0, 123, 255, 0.8)";
   });
   
   chatsbtn.addEventListener("click", () => {
@@ -192,10 +190,8 @@ if (roomId) {
     chatsHereDiv.style.display = 'flex';
     displayvideocallsDiv.style.display = 'none';
     mainChatDiv.scrollTop = mainChatDiv.scrollHeight;
-    // chatsbtn.style.backgroundColor = 'rgba(117, 117, 117, 0.342)';
-    // videoCallsbtn.style.backgroundColor = 'rgba(0, 0, 0, 0)';
-    chatsbtn.style.borderBottom = "2px solid orange";
-    videoCallsbtn.style.borderBottom = "0px solid orange";
+    chatsbtn.style.borderBottom = "2px solid rgba(0, 123, 255, 0.8)";
+    videoCallsbtn.style.borderBottom = "0px solid rgba(0, 123, 255, 0.8)";
   });
 
   muteMe.addEventListener("click", () => {
