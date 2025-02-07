@@ -692,7 +692,7 @@ header {
 
 #chatsHere {
     width: 100%;
-    height: calc(100% - 65px);
+    height: calc(100% - 102px);
     display: flex;
     flex-direction: column;
     gap: 15px;
@@ -732,7 +732,6 @@ header {
 
 /* Message Input Container */
 #senderName, #message {
-    width: 100%;
     color: white;
     border-radius: 8px;
     outline: none;
