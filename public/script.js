@@ -194,6 +194,14 @@ if (roomId) {
     videoCallsbtn.style.borderBottom = "0px solid rgba(0, 123, 255, 0.8)";
   });
 
+  // Function to handle photo enlargement
+  document.addEventListener('click', function (event) {
+      const photoContainer = event.target.closest('.photo-container');
+      if (photoContainer) {
+          photoContainer.classList.toggle('enlarged');
+      }
+  });
+
   muteMe.addEventListener("click", () => {
     console.log("mute clicked");
     if (muteMe.className === "on"){
@@ -552,11 +560,13 @@ function appendPhotoMessage(sender, photoUrl, timestamp, who, message) {
   const mDiv = document.createElement("div");
   const sName = document.createElement("div");
   let ms = document.createElement("div");
+  const photoContainer = document.createElement("div");
   const img = document.createElement("img");
   const tm = document.createElement("div");
 
   mDiv.classList.add("msgs");
   sName.classList.add("sender_name");
+  photoContainer.classList.add("photo-container");
   ms.classList.add("ms");
   tm.classList.add("tm");
 
@@ -576,8 +586,9 @@ function appendPhotoMessage(sender, photoUrl, timestamp, who, message) {
     mDiv.style.alignSelf = "flex-end";
   }
 
+  photoContainer.appendChild(img);
   mDiv.appendChild(sName);
-  mDiv.appendChild(img);
+  mDiv.appendChild(photoContainer);
   mDiv.appendChild(ms);
   mDiv.appendChild(tm);
   mainChatDiv.appendChild(mDiv);
