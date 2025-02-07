@@ -823,3 +823,39 @@ header {
 #photoInput {
     display: none;
 }
+
+/* Photo Enlargement Styling */
+.photo-container {
+    position: relative;
+    max-width: 200px;
+    cursor: pointer;
+    margin: 5px 0;
+}
+
+.photo-container img {
+    width: 100%;
+    border-radius: 8px;
+    transition: transform 0.3s ease, border-radius 0.3s ease;
+}
+
+.photo-container.enlarged {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+    max-width: 90%;
+    max-height: 90%;
+    background-color: rgba(0, 0, 0, 0.9);
+    padding: 10px;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.photo-container.enlarged img {
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 80vh;
+    border-radius: 10px;
+}
