@@ -625,6 +625,7 @@ header {
     background-color: rgb(17, 22, 29);
     display: flex;
     flex-direction: column;
+    justify-content: center;
     gap: 15px;
 }
 
