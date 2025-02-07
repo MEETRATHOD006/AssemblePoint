@@ -1,7 +1,6 @@
 /* public/style.css */
 
-body {
-    /* font-family: Arial, sans-serif; */
+/* body {
     font-family: Verdana, Geneva, Tahoma, sans-serif;
     text-align: center;
     margin: 0;
@@ -22,7 +21,8 @@ header {
     background-color: rgb(17 22 29);
     border-bottom: 1px solid rgb(31 42 57);
     gap: 100px;
-}
+} */
+
 #room-container {
     margin-top: 20px;
 }
@@ -123,21 +123,21 @@ header {
     z-index: 999;
 }
 
-#logo {
+/* #logo {
     margin-left: 10px;
     display: flex;
     gap: 5px;
     align-items: center;
-}
+} */
 
-.creatJoinBtn {
+/* .creatJoinBtn {
     margin-right: 10px;
     height: 100%;
     display: flex;
     align-items: center;
     gap: 10px;
-}
-#create{
+} */
+/* #create{
     width: 100px;
     height: 50px;
     background-color: yellow;
@@ -154,10 +154,9 @@ header {
     border: none;
     border-radius: 10px;
     color: white;
-}
+} */
 
-.mainContainder{
-    /* border: 1px solid red; */
+/* .mainContainder{
     height: calc(100vh - 80px);
     display: flex;
 }
@@ -197,8 +196,8 @@ header {
     align-items: center;
     justify-content: center;
 }
-
-#displayvideocalls {
+ */
+/* #displayvideocalls {
     width: 100%;
     height: calc(100% - 33px);
     display: grid;
@@ -222,9 +221,9 @@ header {
     height: 100%;
     object-fit: cover;
     border-radius: 8px;
-}
+} */
 
-.blankProfilePic {
+/* .blankProfilePic {
     display: none;
     width: 100%;
     height: 100%;
@@ -234,9 +233,9 @@ header {
     top: 0;
     left: 0;
     z-index:10;
-}
+} */
 
-#videoPlayer {
+/* #videoPlayer {
     width: 100%;
     border: 1px solid rgb(31 42 57);
     border-radius: 5px;
@@ -245,20 +244,9 @@ header {
 #videoPlayer video {
     width: 100%;
     border-radius: 5px;
-}
+} */
 
-#adminVideo {
-    width: 100%;
-    height: 100%;
-}
-
-.participantVideo {
-    width: 100%;
-    height: 100%;
-}
-
-#video-container{
-    /* border: 1px solid blue; */
+/* #video-container{
     box-sizing: border-box;
     padding: 0px 10px;
     background-color: rgb(17 22 29);
@@ -279,211 +267,8 @@ header {
     display: flex;
     flex-direction: column;
     gap: 2px;
-}
-
-#searchbar {
-    width: 96%;
-    height: 40px;
-    min-height: 40px;
-    border: 1px solid grey;
-    border-radius: 5px;
-    background-color: rgb(17 22 29);
-    color: white;
-    padding-left: 10px;
-    outline: none;
-    font-size: 15px;
-    z-index: 99;
-
-}
-#suggestions {
-    list-style-type: none;
-    width: 96%;
-    margin: 0;
-    padding: 0;
-    background-color: rgb(24 30 40);
-    color: white;
-    /* border: 1px solid grey; */
-    border-radius: 5px;
-    max-height: 400px;
-    overflow-y: auto;
-    z-index: 1000;
-    position: absolute;
-    top: 65px;
-  }
-
-#suggestions::-webkit-scrollbar {
-    display: none;
-}
-  
-#suggestions li {
-    padding: 10px;
-    cursor: pointer;
-    display: flex;
-    /* align-items: center; */
-    gap: 10px;
-  }
-
-.video-title {
-    margin-top: 10px;
-  }
-  
-#suggestions li:hover {
-    background-color: rgb(30 39 51);
-  }
-
-#custom-controls {
-    position: absolute;
-    z-index: 9999;
-    bottom: 0;
-    left: 0;
-    width: calc(100% - 10px);
-    height: 60px;
-    text-align: left;
-    background-color: black;
-    color: white;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding-left: 10px;
-}
-
-#videoBar {
-    width: 90%;
-}
-
-#setting {
-    list-style: none;
-    font-size: 10px;
-    position: absolute;
-    display: none;
-    flex-direction: column;
-    background-color: #000000;
-    justify-content: center;
-    padding-left: 0;
-    opacity: 0;
-    visibility: hidden;
-    border: 1px solid grey;
-}
-
-#setting > li {
-    padding: 10px;
-    width: 118px;
-    list-style: none;
-    text-align: center;
-}
-
-#setting > li:hover {
-    background-color: #303030;
-}
-
-li:hover #setting {
-    display: flex;
-    opacity: 1;
-    visibility: visible;
-    bottom: 0px;
-    right: 0;
-}
-
-.fa-gear {
-    position: relative;
-}
-
-.fa-gear:hover #setting {
-    display: flex;
-    opacity: 1;
-    visibility: visible;
-    bottom: 0px;
-    right: 0;
-    -webkit-transition: all .5s, background, 2s .5s linear;
-    transition: all .5s, background 2s .5s linear;
-}
-
-.fa-volume-high {
-    position: relative;
-}
-
-#volumeBar {
-    position: absolute;
-    transform: rotate(90deg);
-    right: -55px;
-    bottom: 72px;
-    opacity: 0;
-    visibility: hidden;
-}
-
-.fa-volume-high:hover #volumeBar{
-    opacity: 1;
-    visibility: visible;
-}
-
-#Quality {
-    position: relative;
-}
-
-#quality-menu {
-    position: absolute;
-    left: -393px;
-    top: -33px;
-    font-size: 12px;
-    border: 1px solid grey;
-    list-style: none;
-    list-style-type: none;
-    padding-left: 0px;
-    background-color: black;
-    opacity: 0;
-}
-
-#quality-menu > li {
-    padding: 10px;
-}
-#quality-menu > li:hover {
-    background-color: #303030;
-}
-
-#Quality:hover #quality-menu {
-    opacity: 1;
-}
-
-#playbackSpeed {
-    position: relative;
-}
-
-#playbackSpeed-menu {
-    list-style: none;
-    padding-left: 0px;
-    border: 1px solid grey;
-    position: absolute;
-    background-color: black;
-    left: -52px;
-    bottom: 0;
-    opacity: 0;
-}
-
-#playbackSpeed-menu > * {
-    padding: 10px;
-
-}
-#playbackSpeed-menu > *:hover {
-    background-color: #303030;
-}
-
-#playbackSpeed:hover #playbackSpeed-menu{
-    opacity: 1;
-}
-
-/* Add these to style.css */
-.shared-screen {
-  width: 100%;
-  height: 80vh;
-  border: 2px solid #4CAF50;
-  border-radius: 8px;
-  background: #000;
-}
-
-#shared-screen-video {
-  object-fit: contain;
-}
-
+} */
+/* 
 #startScreenShare {
     padding: 0.5rem 2rem;
     font-size: 1rem;
@@ -512,8 +297,8 @@ li:hover #setting {
     background-color: rgba(255, 255, 255, 0.1);
     color: rgba(255, 255, 255, 0.9);
     border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
+} */
+/* 
 #cm {
     width: calc(100% - 1px);
     border-top: 1px solid rgb(31 42 57);
@@ -544,7 +329,7 @@ li:hover #setting {
     justify-content: center;
     font-size: 22px;
 }
-
+ */
 #chatsHere {
     width: 100%;
     height: calc(100% - 65px);
@@ -659,4 +444,241 @@ li:hover #setting {
     background-color: #c32b2b;
     color: white;
     font-size: 20px;
+}
+
+
+
+/* Re Designed by DeepSeek */
+/* Updated style.css */
+
+body {
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: rgb(17, 22, 29);
+    color: white;
+}
+
+body::-webkit-scrollbar {
+    display: none;
+}
+
+/* Header Styling */
+header {
+    background-color: rgb(17, 22, 29);
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.95);
+}
+
+#logo i {
+    font-size: 25px;
+    color: rgba(0, 123, 255, 0.8);
+}
+
+.creatJoinBtn {
+    display: flex;
+    gap: 10px;
+}
+
+#create, #join {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    font-weight: 500;
+    letter-spacing: 1px;
+}
+
+#create {
+    background-color: rgba(0, 123, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(0, 123, 255, 0.3);
+}
+
+#create:hover {
+    background-color: rgba(0, 123, 255, 0.2);
+}
+
+#join {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+#join:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Main Container Styling */
+.mainContainder {
+    height: calc(100vh - 80px);
+    display: flex;
+}
+
+.peopleAndChat {
+    width: 350px;
+    height: 100%;
+    background-color: rgb(17, 22, 29);
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+.twikVideoAndChat {
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#videocalls, #chats {
+    padding: 10px;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.8);
+    transition: color 0.3s ease;
+}
+
+#videocalls:hover, #chats:hover {
+    color: rgba(0, 123, 255, 0.8);
+}
+
+#videocalls.active, #chats.active {
+    color: rgba(0, 123, 255, 0.8);
+    border-bottom: 2px solid rgba(0, 123, 255, 0.8);
+}
+
+#displayvideocalls {
+    flex: 1;
+    padding: 10px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+    overflow-y: auto;
+}
+
+.individualsVideo {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.individualsVideo video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.blankProfilePic {
+    display: none;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 10;
+}
+
+#cm {
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: rgb(17, 22, 29);
+}
+
+#mute, #hideV {
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.8);
+    transition: color 0.3s ease;
+}
+
+#mute:hover, #hideV:hover {
+    color: rgba(0, 123, 255, 0.8);
+}
+
+#video-container {
+    flex: 1;
+    padding: 20px;
+    background-color: rgb(17, 22, 29);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+#video {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#videoPlayer {
+    width: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#videoPlayer video {
+    width: 100%;
+    border-radius: 8px;
+}
+
+#controls {
+    display: flex;
+    gap: 10px;
+}
+
+#startScreenShare, #stopScreenShare {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    font-weight: 500;
+    letter-spacing: 1px;
+}
+
+#startScreenShare {
+    background-color: rgba(0, 123, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(0, 123, 255, 0.3);
+}
+
+#startScreenShare:hover {
+    background-color: rgba(0, 123, 255, 0.2);
+}
+
+#stopScreenShare {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+#stopScreenShare:hover {
+    background-color: rgba(255, 255, 255, 0.2);
 }
