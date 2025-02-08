@@ -347,9 +347,9 @@ function stopScreenShare() {
     }
   }
   
-  const videoElement = document.getElementById("videoPlayer");
+  const videoElement = document.querySelector("#videoPlayer video");
   if (videoElement) {
-    videoElement.innerHTML = "";
+    videoElement.srcObject = null;
   }
   
   socket.emit("screen-share-stop", roomId, myPeer.id);
