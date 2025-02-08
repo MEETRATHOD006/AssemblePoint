@@ -6,6 +6,7 @@ let myPeerId = null;  // Store the peer ID
 let localStream = null; // Store the local video stream
 let isScreenSharing = false; // Flag to check screen sharing status
 let currentScreenStream = null;
+let screenStream;
 const startScreenShareBtn = document.getElementById("startScreenShare");
 const stopScreenShareBtn = document.getElementById("stopScreenShare");
 const videoCallsbtn = document.getElementById("videocalls");
