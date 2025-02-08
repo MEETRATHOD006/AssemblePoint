@@ -379,8 +379,10 @@ socket.on("screen-share-started", (sharedUserId) => {
 
 // When screen sharing stops
 socket.on("screen-share-stopped", (sharerUserId) => {
-  const videoContainer = document.getElementById("videoPlayer");
-  videoContainer.innerHTML = ""; // Clear the screen share
+  const videoElement = document.querySelector("#videoPlayer video");
+  if (videoElement) {
+    videoElement.srcObject = null;
+  } // Clear the screen share
   startScreenShareBtn.disabled = false;
   stopScreenShareBtn.disabled = true;
 });
