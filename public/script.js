@@ -21,7 +21,8 @@ const photoInput = document.getElementById("photoInput");
 const sendPhotoBtn = document.getElementById("sendPhotoBtn");
 const muteMe = document.getElementById("mute");
 const hideV = document.getElementById("hideV");
-let capturer;
+let mediaRecorder;
+let recordedChunks = [];
 let isRecording = false;
 const canvas = document.getElementById('recordingCanvas');
 const context = canvas.getContext('2d', { willReadFrequently: true });
@@ -210,8 +211,12 @@ if (roomId) {
       context.fillText(`Frame: ${frameCount++} @ ${Math.floor(timestamp / 1000)}s`, 10, 30);
   
       console.log('Canvas updated at:', new Date().toISOString(), 'FPS:', 1000 / (timestamp - (animationFrameId || timestamp)));
-      if (isRecording && capturer) {
-        capturer.capture(canvas);
+      if (isRecording) {
+        // Ensure stream is captured if recording
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+          const stream = canvas.captureStream(15); // 15 FPS target
+          // Note: MediaRecorder handles the stream; no manual capture needed here
+        }
       }
     } catch (err) {
       console.error('Error capturing UI:', err);
@@ -227,61 +232,60 @@ if (roomId) {
     if (recordButton.classList.contains('off')) {
       const fileName = prompt("Enter a name for the recording (e.g., meeting_2025):") || `recording_${Date.now()}`;
       if (fileName) {
-        // Check if CCapture is defined
-        if (typeof CCapture === 'undefined') {
-          console.error('CCapture.js is not loaded. Check the script tag or network.');
-          alert('Recording failed: CCapture.js library is not available. Please refresh and try again.');
-          return;
+        await captureUI(performance.now());
+        const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true }).catch(err => {
+          console.warn('Audio capture failed, proceeding without audio:', err);
+          return null;
+        });
+        const canvasStream = canvas.captureStream(15); // 15 FPS target
+        const streams = [canvasStream];
+        if (audioStream) streams.push(audioStream);
+        const combinedStream = new MediaStream(streams.flatMap(stream => [stream.getVideoTracks()[0], stream.getAudioTracks()[0]]).filter(track => track));
+  
+        // Check for MP4 support
+        const mimeType = 'video/mp4; codecs=h264'; // Common MP4 codec
+        if (!MediaRecorder.isTypeSupported(mimeType)) {
+          console.warn('MP4 not supported, falling back to webm:', MediaRecorder.isTypeSupported('video/webm'));
+          mimeType = 'video/webm; codecs=vp9';
         }
   
-        // Initialize CCapture.js with MP4 format
-        capturer = new CCapture({
-          format: 'mp4', // Switch to MP4
-          framerate: 15,
-          verbose: true,
-          quality: 80, // Adjust quality for MP4 (0-100)
-          name: fileName,
-          timeLimit: 0,
-          autoSaveTime: 0
-        });
+        mediaRecorder = new MediaRecorder(combinedStream, { mimeType });
+        recordedChunks = [];
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) recordedChunks.push(event.data);
+        };
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(recordedChunks, { type: mimeType });
+          if (blob.size > 0) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${fileName}.${mimeType.split(';')[0].split('/')[1]}`;
+            a.click();
+            URL.revokeObjectURL(url);
+            console.log('File saved successfully');
+          } else {
+            console.error('No data recorded, file size is 0');
+            alert('Recording failed: No data captured.');
+          }
+          if (audioStream) audioStream.getTracks().forEach(track => track.stop());
+          isRecording = false;
+          recordButton.classList.remove('on');
+          recordButton.classList.add('off');
+          recordButton.title = 'Turn on recording';
+        };
   
-        await captureUI(performance.now());
-        capturer.start();
+        mediaRecorder.start(100); // Emit data every 100ms
         isRecording = true;
         captureUI(performance.now()); // Start the animation loop
         recordButton.classList.remove('off');
         recordButton.classList.add('on');
         recordButton.title = 'Turn off recording';
-        console.log('UI recording started for AssemblePoint with CCapture.js');
+        console.log('UI recording started with MediaRecorder');
       }
     } else if (recordButton.classList.contains('on')) {
-      if (isRecording && capturer) {
-        capturer.stop();
-        // Add a delay to ensure data is ready before saving
-        setTimeout(() => {
-          try {
-            capturer.save((blob) => {
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url;
-              a.download = `${capturer.opts.name}.mp4`;
-              a.click();
-              URL.revokeObjectURL(url);
-              console.log('File saved successfully');
-            }, (error) => {
-              console.error('Save failed:', error);
-              alert('Recording save failed. Check console for details.');
-            });
-          } catch (err) {
-            console.error('Error during save:', err);
-            alert('Recording save failed due to an unexpected error.');
-          }
-        }, 1000); // 1-second delay
-        isRecording = false;
-        cancelAnimationFrame(animationFrameId);
-        recordButton.classList.remove('on');
-        recordButton.classList.add('off');
-        recordButton.title = 'Turn on recording';
+      if (isRecording && mediaRecorder) {
+        mediaRecorder.stop();
         console.log('UI recording stopped');
       }
     }
