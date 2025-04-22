@@ -231,13 +231,15 @@ if (roomId) {
           return;
         }
   
-        // Initialize CCapture.js
+        // Initialize CCapture.js with adjusted settings
         capturer = new CCapture({
           format: 'webm',
-          framerate: 30,
+          framerate: 15, // Reduced to 15 FPS to stabilize encoding
           verbose: true,
-          quality: 100,
-          name: fileName
+          quality: 80, // Reduced quality to avoid encoder issues
+          name: fileName,
+          timeLimit: 0,
+          autoSaveTime: 0
         });
   
         await captureUI(performance.now());
@@ -252,13 +254,32 @@ if (roomId) {
     } else if (recordButton.classList.contains('on')) {
       if (isRecording && capturer) {
         capturer.stop();
-        capturer.save();
+        // Add a delay to ensure data is ready before saving
+        setTimeout(() => {
+          try {
+            capturer.save((blob) => {
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `${capturer.opts.name}.webm`;
+              a.click();
+              URL.revokeObjectURL(url);
+              console.log('File saved successfully');
+            }, (error) => {
+              console.error('Save failed:', error);
+              alert('Recording save failed. Check console for details.');
+            });
+          } catch (err) {
+            console.error('Error during save:', err);
+            alert('Recording save failed due to an unexpected error.');
+          }
+        }, 1000); // 1-second delay
         isRecording = false;
         cancelAnimationFrame(animationFrameId);
         recordButton.classList.remove('on');
         recordButton.classList.add('off');
         recordButton.title = 'Turn on recording';
-        console.log('UI recording stopped and saved');
+        console.log('UI recording stopped');
       }
     }
   });
