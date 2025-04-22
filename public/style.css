@@ -868,8 +868,9 @@ header {
   position: absolute;
   top: 0;
   left: 0;
-  z-index: -1; /* Hidden but active for recording */
-  max-width: 100%; /* Ensure it fits the UI */
+  /* z-index: -1; /* Uncomment to hide after debugging */
+  max-width: 100%;
+  border: 1px solid red; /* For debugging visibility */
 }
 
 @keyframes zoomIn {
