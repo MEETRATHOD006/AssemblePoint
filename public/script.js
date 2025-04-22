@@ -21,15 +21,12 @@ const photoInput = document.getElementById("photoInput");
 const sendPhotoBtn = document.getElementById("sendPhotoBtn");
 const muteMe = document.getElementById("mute");
 const hideV = document.getElementById("hideV");
-let mediaRecorder;
-let recordedChunks = [];
+let capturer;
 let isRecording = false;
 const canvas = document.getElementById('recordingCanvas');
 const context = canvas.getContext('2d', { willReadFrequently: true });
 let animationFrameId;
-let localStream = null;
-let peerStreams = new Map();
-
+let frameCount = 0;
 // Connection established
 socket.on("connect", () => {
   console.log("Connected to Socket.IO server with ID:", socket.id);
@@ -184,46 +181,41 @@ if (roomId) {
     }
   }
 
-  async function setupStreams() {
-    localStream = await navigator.mediaDevices.getUserMedia({
-      video: { width: 1920, height: 1080, frameRate: 30 },
-      audio: true
-    });
-    document.querySelector('#videoPlayer video').srcObject = localStream;
-  }
+  async function captureUI(timestamp) {
+    try {
+      const mainContainer = document.querySelector('.mainContainder');
+      if (!mainContainer) {
+        console.error('Main container not found');
+        return;
+      }
   
-  function compositeStreams() {
-    canvas.width = 1920;
-    canvas.height = 1080;
-    context.fillStyle = 'black';
-    context.fillRect(0, 0, 1920, 1080); // Background
+      const canvasSnapshot = await html2canvas(mainContainer, {
+        useCORS: true,
+        scale: 1,
+        logging: true
+      });
   
-    // Draw local video
-    if (localStream) {
-      const localVideo = document.querySelector('#videoPlayer video');
-      context.drawImage(localVideo, 0, 0, 960, 540); // Half width for layout
+      // Set to 1080p resolution
+      canvas.width = 1920;
+      canvas.height = 1080;
+      context.drawImage(canvasSnapshot, 0, 0, 1920, 1080);
+  
+      // Dynamic overlay to ensure frame updates
+      context.fillStyle = 'red';
+      context.font = '16px Arial';
+      context.fillText(`Frame: ${frameCount++} @ ${Math.floor(timestamp / 1000)}s`, 10, 30);
+  
+      console.log('Canvas updated at:', new Date().toISOString(), 'FPS:', 1000 / (timestamp - (animationFrameId || timestamp)));
+      if (isRecording && capturer) {
+        capturer.capture(canvas);
+      }
+    } catch (err) {
+      console.error('Error capturing UI:', err);
     }
   
-    // Draw peer videos
-    const peerVideos = document.querySelectorAll('#displayvideocalls video');
-    let xOffset = 960, yOffset = 0;
-    peerStreams.forEach((stream, peerId) => {
-      const video = Array.from(peerVideos).find(v => v.id === peerId);
-      if (video && stream) {
-        context.drawImage(video, xOffset, yOffset, 960, 540);
-        xOffset += 960;
-        if (xOffset >= 1920) {
-          xOffset = 0;
-          yOffset += 540;
-        }
-      }
-    });
-  
-    // Overlay chat (simplified example)
-    context.fillStyle = 'white';
-    context.font = '20px Arial';
-    const chatMessages = document.getElementById('mainChat')?.innerText || '';
-    context.fillText(chatMessages.substring(0, 100), 10, 1070); // Bottom overlay
+    if (isRecording) {
+      animationFrameId = requestAnimationFrame(captureUI);
+    }
   }
   
   document.getElementById('Record').addEventListener('click', async () => {
@@ -231,74 +223,37 @@ if (roomId) {
     if (recordButton.classList.contains('off')) {
       const fileName = prompt("Enter a name for the recording (e.g., meeting_2025):") || `recording_${Date.now()}`;
       if (fileName) {
-        if (!localStream) await setupStreams();
+        // Initialize CCapture.js
+        capturer = new CCapture({
+          format: 'webm',
+          framerate: 30,
+          verbose: true,
+          quality: 100, // Maximum quality
+          name: fileName
+        });
   
-        mediaRecorder = new MediaRecorder(canvas.captureStream(30), { mimeType: 'video/webm; codecs=vp9' });
-        mediaRecorder.ondataavailable = (event) => {
-          if (event.data.size > 0) {
-            recordedChunks.push(event.data);
-            console.log('Data available, size:', event.data.size);
-          } else {
-            console.warn('No data in this chunk');
-          }
-        };
-        mediaRecorder.onstop = () => {
-          const blob = new Blob(recordedChunks, { type: 'video/webm' });
-          console.log('Final blob size:', blob.size);
-          if (blob.size > 0) {
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${fileName}.webm`;
-            a.click();
-            URL.revokeObjectURL(url);
-          } else {
-            console.error('No data recorded, file size is 0');
-            alert('Recording failed: No data captured. Check console for details.');
-          }
-          recordedChunks = [];
-          isRecording = false;
-          cancelAnimationFrame(animationFrameId);
-          recordButton.classList.remove('on');
-          recordButton.classList.add('off');
-          recordButton.title = 'Turn on recording';
-        };
-  
-        mediaRecorder.start(100); // Emit data every 100ms
+        await captureUI(performance.now());
+        capturer.start();
         isRecording = true;
-        animationFrameId = requestAnimationFrame(compositeStreams);
+        captureUI(performance.now()); // Start the animation loop
         recordButton.classList.remove('off');
         recordButton.classList.add('on');
         recordButton.title = 'Turn off recording';
-        console.log('UI recording started for AssemblePoint');
+        console.log('UI recording started for AssemblePoint with CCapture.js');
       }
     } else if (recordButton.classList.contains('on')) {
-      if (isRecording && mediaRecorder) {
-        mediaRecorder.stop();
-        console.log('UI recording stopped');
+      if (isRecording && capturer) {
+        capturer.stop();
+        capturer.save();
+        isRecording = false;
+        cancelAnimationFrame(animationFrameId);
+        recordButton.classList.remove('on');
+        recordButton.classList.add('off');
+        recordButton.title = 'Turn on recording';
+        console.log('UI recording stopped and saved');
       }
     }
   });
-  
-  // Update peerStreams when new users connect (integrate with existing PeerJS code)
-  function addPeerStream(peerId, stream) {
-    peerStreams.set(peerId, stream);
-    const video = document.createElement('video');
-    video.id = peerId;
-    video.srcObject = stream;
-    video.autoplay = true;
-    document.getElementById('displayvideocalls').appendChild(video);
-  }
-  
-  // Example integration with existing code (adjust based on your PeerJS setup)
-  navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-    .then(stream => {
-      localStream = stream;
-      // Assume this is part of your peer connection logic
-      // e.g., socket.on('user-connected', userId => { addPeerStream(userId, stream); });
-    })
-    .catch(err => console.error('Media access failed:', err));
-
 
 
   videoCallsbtn.addEventListener("click", () => {
