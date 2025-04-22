@@ -868,9 +868,9 @@ header {
   position: absolute;
   top: 0;
   left: 0;
-  /* z-index: -1; /* Uncomment to hide after debugging */
+  /* z-index: -1; */
   max-width: 100%;
-  border: 1px solid red; /* For debugging visibility */
+  border: 1px solid red;
 }
 
 @keyframes zoomIn {
