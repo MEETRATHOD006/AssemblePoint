@@ -863,6 +863,15 @@ header {
     border-radius: 10px;
 }
 
+
+#recordingCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -1; /* Hidden but active for recording */
+  max-width: 100%; /* Ensure it fits the UI */
+}
+
 @keyframes zoomIn {
     from {
         transform: translate(-50%, -50%) scale(0.5);
