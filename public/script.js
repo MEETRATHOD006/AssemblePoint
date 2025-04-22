@@ -21,7 +21,7 @@ const photoInput = document.getElementById("photoInput");
 const sendPhotoBtn = document.getElementById("sendPhotoBtn");
 const muteMe = document.getElementById("mute");
 const hideV = document.getElementById("hideV");
-let mediaRecorder;
+let mediaRecorder; // Changed to let to allow reassignment
 let recordedChunks = [];
 let isRecording = false;
 const canvas = document.getElementById('recordingCanvas');
@@ -243,14 +243,15 @@ if (roomId) {
         const combinedStream = new MediaStream(streams.flatMap(stream => [stream.getVideoTracks()[0], stream.getAudioTracks()[0]]).filter(track => track));
   
         // Check for MP4 support
-        const mimeType = 'video/mp4; codecs=h264'; // Common MP4 codec
+        let mimeType = 'video/mp4; codecs=h264'; // Preferred MIME type
         if (!MediaRecorder.isTypeSupported(mimeType)) {
           console.warn('MP4 not supported, falling back to webm:', MediaRecorder.isTypeSupported('video/webm'));
           mimeType = 'video/webm; codecs=vp9';
         }
   
+        // Initialize mediaRecorder
+        recordedChunks = []; // Reset chunks for new recording
         mediaRecorder = new MediaRecorder(combinedStream, { mimeType });
-        recordedChunks = [];
         mediaRecorder.ondataavailable = (event) => {
           if (event.data.size > 0) recordedChunks.push(event.data);
         };
