@@ -214,7 +214,7 @@ if (roomId) {
       console.log('Canvas updated at:', new Date().toISOString(), 'FPS:', fps, 'Expected Resolution:', canvasSnapshot.width, 'x', canvasSnapshot.height);
       if (isRecording) {
         if (mediaRecorder && mediaRecorder.state === 'recording') {
-          const stream = canvas.captureStream(15); // 15 FPS target
+          const stream = canvas.captureStream(30); // 15 FPS target
         }
       }
     } catch (err) {
