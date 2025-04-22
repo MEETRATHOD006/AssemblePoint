@@ -27,6 +27,7 @@ const canvas = document.getElementById('recordingCanvas');
 const context = canvas.getContext('2d', { willReadFrequently: true });
 let animationFrameId;
 let frameCount = 0;
+
 // Connection established
 socket.on("connect", () => {
   console.log("Connected to Socket.IO server with ID:", socket.id);
@@ -223,12 +224,19 @@ if (roomId) {
     if (recordButton.classList.contains('off')) {
       const fileName = prompt("Enter a name for the recording (e.g., meeting_2025):") || `recording_${Date.now()}`;
       if (fileName) {
+        // Check if CCapture is defined
+        if (typeof CCapture === 'undefined') {
+          console.error('CCapture.js is not loaded. Check the script tag or network.');
+          alert('Recording failed: CCapture.js library is not available. Please refresh and try again.');
+          return;
+        }
+  
         // Initialize CCapture.js
         capturer = new CCapture({
           format: 'webm',
           framerate: 30,
           verbose: true,
-          quality: 100, // Maximum quality
+          quality: 100,
           name: fileName
         });
   
