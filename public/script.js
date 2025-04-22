@@ -27,7 +27,8 @@ let isRecording = false;
 const canvas = document.getElementById('recordingCanvas');
 const context = canvas.getContext('2d', { willReadFrequently: true });
 let animationFrameId;
-let frameCount = 0;
+let localStream = null;
+let peerStreams = new Map();
 
 // Connection established
 socket.on("connect", () => {
@@ -183,39 +184,46 @@ if (roomId) {
     }
   }
 
-  async function captureUI(timestamp) {
-    try {
-      const mainContainer = document.querySelector('.mainContainder');
-      if (!mainContainer) {
-        console.error('Main container not found');
-        return;
+  async function setupStreams() {
+    localStream = await navigator.mediaDevices.getUserMedia({
+      video: { width: 1920, height: 1080, frameRate: 30 },
+      audio: true
+    });
+    document.querySelector('#videoPlayer video').srcObject = localStream;
+  }
+  
+  function compositeStreams() {
+    canvas.width = 1920;
+    canvas.height = 1080;
+    context.fillStyle = 'black';
+    context.fillRect(0, 0, 1920, 1080); // Background
+  
+    // Draw local video
+    if (localStream) {
+      const localVideo = document.querySelector('#videoPlayer video');
+      context.drawImage(localVideo, 0, 0, 960, 540); // Half width for layout
+    }
+  
+    // Draw peer videos
+    const peerVideos = document.querySelectorAll('#displayvideocalls video');
+    let xOffset = 960, yOffset = 0;
+    peerStreams.forEach((stream, peerId) => {
+      const video = Array.from(peerVideos).find(v => v.id === peerId);
+      if (video && stream) {
+        context.drawImage(video, xOffset, yOffset, 960, 540);
+        xOffset += 960;
+        if (xOffset >= 1920) {
+          xOffset = 0;
+          yOffset += 540;
+        }
       }
+    });
   
-      // Use a cached snapshot if possible to reduce overhead
-      const canvasSnapshot = await html2canvas(mainContainer, {
-        useCORS: true,
-        scale: 1, // Avoid oversampling to match 1080p
-        logging: true
-      });
-  
-      // Set to 1080p resolution
-      canvas.width = 1920;
-      canvas.height = 1080;
-      context.drawImage(canvasSnapshot, 0, 0, 1920, 1080);
-  
-      // Dynamic overlay to ensure frame updates
-      context.fillStyle = 'red';
-      context.font = '16px Arial';
-      context.fillText(`Frame: ${frameCount++} @ ${Math.floor(timestamp / 1000)}s`, 10, 30);
-  
-      console.log('Canvas updated at:', new Date().toISOString(), 'FPS:', 1000 / (timestamp - (animationFrameId || timestamp)));
-    } catch (err) {
-      console.error('Error capturing UI:', err);
-    }
-  
-    if (isRecording) {
-      animationFrameId = requestAnimationFrame(captureUI);
-    }
+    // Overlay chat (simplified example)
+    context.fillStyle = 'white';
+    context.font = '20px Arial';
+    const chatMessages = document.getElementById('mainChat')?.innerText || '';
+    context.fillText(chatMessages.substring(0, 100), 10, 1070); // Bottom overlay
   }
   
   document.getElementById('Record').addEventListener('click', async () => {
@@ -223,15 +231,9 @@ if (roomId) {
     if (recordButton.classList.contains('off')) {
       const fileName = prompt("Enter a name for the recording (e.g., meeting_2025):") || `recording_${Date.now()}`;
       if (fileName) {
-        await captureUI(performance.now());
-        const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true }).catch(err => {
-          console.warn('Audio capture failed, proceeding without audio:', err);
-          return null;
-        });
-        const streams = [canvas.captureStream(30)];
-        if (audioStream) streams.push(audioStream);
-        const combinedStream = new MediaStream(streams.flatMap(stream => [stream.getVideoTracks()[0], stream.getAudioTracks()[0]]).filter(track => track));
-        mediaRecorder = new MediaRecorder(combinedStream, { mimeType: 'video/webm; codecs=vp9' });
+        if (!localStream) await setupStreams();
+  
+        mediaRecorder = new MediaRecorder(canvas.captureStream(30), { mimeType: 'video/webm; codecs=vp9' });
         mediaRecorder.ondataavailable = (event) => {
           if (event.data.size > 0) {
             recordedChunks.push(event.data);
@@ -257,15 +259,14 @@ if (roomId) {
           recordedChunks = [];
           isRecording = false;
           cancelAnimationFrame(animationFrameId);
-          if (audioStream) audioStream.getTracks().forEach(track => track.stop());
           recordButton.classList.remove('on');
           recordButton.classList.add('off');
           recordButton.title = 'Turn on recording';
         };
   
-        mediaRecorder.start(100); // Emit data every 100ms for smoother capture
+        mediaRecorder.start(100); // Emit data every 100ms
         isRecording = true;
-        captureUI(performance.now());
+        animationFrameId = requestAnimationFrame(compositeStreams);
         recordButton.classList.remove('off');
         recordButton.classList.add('on');
         recordButton.title = 'Turn off recording';
@@ -278,6 +279,25 @@ if (roomId) {
       }
     }
   });
+  
+  // Update peerStreams when new users connect (integrate with existing PeerJS code)
+  function addPeerStream(peerId, stream) {
+    peerStreams.set(peerId, stream);
+    const video = document.createElement('video');
+    video.id = peerId;
+    video.srcObject = stream;
+    video.autoplay = true;
+    document.getElementById('displayvideocalls').appendChild(video);
+  }
+  
+  // Example integration with existing code (adjust based on your PeerJS setup)
+  navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+    .then(stream => {
+      localStream = stream;
+      // Assume this is part of your peer connection logic
+      // e.g., socket.on('user-connected', userId => { addPeerStream(userId, stream); });
+    })
+    .catch(err => console.error('Media access failed:', err));
 
 
 
