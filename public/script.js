@@ -198,7 +198,7 @@ if (roomId) {
   
       const canvasSnapshot = await html2canvas(mainContainer, {
         useCORS: true,
-        scale: 1, // Increased to full resolution
+        scale: 2, // Increased to full resolution
         logging: true
       });
   
