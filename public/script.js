@@ -21,7 +21,7 @@ const photoInput = document.getElementById("photoInput");
 const sendPhotoBtn = document.getElementById("sendPhotoBtn");
 const muteMe = document.getElementById("mute");
 const hideV = document.getElementById("hideV");
-let mediaRecorder; // Changed to let to allow reassignment
+let mediaRecorder;
 let recordedChunks = [];
 let isRecording = false;
 const canvas = document.getElementById('recordingCanvas');
@@ -198,7 +198,7 @@ if (roomId) {
   
       const canvasSnapshot = await html2canvas(mainContainer, {
         useCORS: true,
-        scale: 0.5,
+        scale: 1, // Increased to full resolution
         logging: true
       });
   
@@ -210,12 +210,11 @@ if (roomId) {
       context.font = '16px Arial';
       context.fillText(`Frame: ${frameCount++} @ ${Math.floor(timestamp / 1000)}s`, 10, 30);
   
-      console.log('Canvas updated at:', new Date().toISOString(), 'FPS:', 1000 / (timestamp - (animationFrameId || timestamp)));
+      const fps = 1000 / (timestamp - (animationFrameId || timestamp));
+      console.log('Canvas updated at:', new Date().toISOString(), 'FPS:', fps, 'Expected Resolution:', canvasSnapshot.width, 'x', canvasSnapshot.height);
       if (isRecording) {
-        // Ensure stream is captured if recording
         if (mediaRecorder && mediaRecorder.state === 'recording') {
           const stream = canvas.captureStream(15); // 15 FPS target
-          // Note: MediaRecorder handles the stream; no manual capture needed here
         }
       }
     } catch (err) {
@@ -243,7 +242,7 @@ if (roomId) {
         const combinedStream = new MediaStream(streams.flatMap(stream => [stream.getVideoTracks()[0], stream.getAudioTracks()[0]]).filter(track => track));
   
         // Check for MP4 support
-        let mimeType = 'video/mp4; codecs=h264'; // Preferred MIME type
+        let mimeType = 'video/mp4; codecs=h264';
         if (!MediaRecorder.isTypeSupported(mimeType)) {
           console.warn('MP4 not supported, falling back to webm:', MediaRecorder.isTypeSupported('video/webm'));
           mimeType = 'video/webm; codecs=vp9';
@@ -264,7 +263,7 @@ if (roomId) {
             a.download = `${fileName}.${mimeType.split(';')[0].split('/')[1]}`;
             a.click();
             URL.revokeObjectURL(url);
-            console.log('File saved successfully');
+            console.log('File saved successfully, size:', blob.size, 'bytes');
           } else {
             console.error('No data recorded, file size is 0');
             alert('Recording failed: No data captured.');
@@ -291,6 +290,7 @@ if (roomId) {
       }
     }
   });
+
   
   videoCallsbtn.addEventListener("click", () => {
     console.log("videoCall clicked");
