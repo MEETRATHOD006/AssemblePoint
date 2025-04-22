@@ -182,111 +182,111 @@ if (roomId) {
     }
   }
 
-      canvas.width = 1920;
-      canvas.height = 1080;
-      console.log('Canvas initialized with width:', canvas.width, 'height:', canvas.height);
-      
-      async function captureUI(timestamp) {
-        try {
-          const mainContainer = document.querySelector('.mainContainder');
-          if (!mainContainer) {
-            console.error('Main container not found');
-            return;
-          }
-      
-          const canvasSnapshot = await html2canvas(mainContainer, {
-            useCORS: true,
-            scale: 0.5,
-            logging: true
-          });
-      
-          // Use existing canvas dimensions
-          context.drawImage(canvasSnapshot, 0, 0, canvas.width, canvas.height);
-      
-          // Dynamic overlay to ensure frame updates
-          context.fillStyle = 'red';
-          context.font = '16px Arial';
-          context.fillText(`Frame: ${frameCount++} @ ${Math.floor(timestamp / 1000)}s`, 10, 30);
-      
-          console.log('Canvas updated at:', new Date().toISOString(), 'FPS:', 1000 / (timestamp - (animationFrameId || timestamp)));
-          if (isRecording && capturer) {
-            capturer.capture(canvas);
-          }
-        } catch (err) {
-          console.error('Error capturing UI:', err);
-        }
-      
-        if (isRecording) {
-          animationFrameId = requestAnimationFrame(captureUI);
-        }
+  // Initialize canvas dimensions
+  canvas.width = 1920;
+  canvas.height = 1080;
+  console.log('Canvas initialized with width:', canvas.width, 'height:', canvas.height);
+  
+  async function captureUI(timestamp) {
+    try {
+      const mainContainer = document.querySelector('.mainContainder');
+      if (!mainContainer) {
+        console.error('Main container not found');
+        return;
       }
-      
-      document.getElementById('Record').addEventListener('click', async () => {
-        const recordButton = document.getElementById('Record');
-        if (recordButton.classList.contains('off')) {
-          const fileName = prompt("Enter a name for the recording (e.g., meeting_2025):") || `recording_${Date.now()}`;
-          if (fileName) {
-            // Check if CCapture is defined
-            if (typeof CCapture === 'undefined') {
-              console.error('CCapture.js is not loaded. Check the script tag or network.');
-              alert('Recording failed: CCapture.js library is not available. Please refresh and try again.');
-              return;
-            }
-      
-            // Initialize CCapture.js with GIF format
-            capturer = new CCapture({
-              format: 'gif',
-              framerate: 15,
-              verbose: true,
-              quality: 10,
-              name: fileName,
-              timeLimit: 0,
-              autoSaveTime: 0
-            });
-      
-            await captureUI(performance.now());
-            capturer.start();
-            isRecording = true;
-            captureUI(performance.now()); // Start the animation loop
-            recordButton.classList.remove('off');
-            recordButton.classList.add('on');
-            recordButton.title = 'Turn off recording';
-            console.log('UI recording started for AssemblePoint with CCapture.js');
-          }
-        } else if (recordButton.classList.contains('on')) {
-          if (isRecording && capturer) {
-            capturer.stop();
-            // Add a delay to ensure data is ready before saving
-            setTimeout(() => {
-              try {
-                capturer.save((blob) => {
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement('a');
-                  a.href = url;
-                  a.download = `${capturer.opts.name}.gif`;
-                  a.click();
-                  URL.revokeObjectURL(url);
-                  console.log('File saved successfully');
-                }, (error) => {
-                  console.error('Save failed:', error);
-                  alert('Recording save failed. Check console for details.');
-                });
-              } catch (err) {
-                console.error('Error during save:', err);
-                alert('Recording save failed due to an unexpected error.');
-              }
-            }, 1000); // 1-second delay
-            isRecording = false;
-            cancelAnimationFrame(animationFrameId);
-            recordButton.classList.remove('on');
-            recordButton.classList.add('off');
-            recordButton.title = 'Turn on recording';
-            console.log('UI recording stopped');
-          }
-        }
+  
+      const canvasSnapshot = await html2canvas(mainContainer, {
+        useCORS: true,
+        scale: 0.5,
+        logging: true
       });
-
-
+  
+      // Use existing canvas dimensions
+      context.drawImage(canvasSnapshot, 0, 0, canvas.width, canvas.height);
+  
+      // Dynamic overlay to ensure frame updates
+      context.fillStyle = 'red';
+      context.font = '16px Arial';
+      context.fillText(`Frame: ${frameCount++} @ ${Math.floor(timestamp / 1000)}s`, 10, 30);
+  
+      console.log('Canvas updated at:', new Date().toISOString(), 'FPS:', 1000 / (timestamp - (animationFrameId || timestamp)));
+      if (isRecording && capturer) {
+        capturer.capture(canvas);
+      }
+    } catch (err) {
+      console.error('Error capturing UI:', err);
+    }
+  
+    if (isRecording) {
+      animationFrameId = requestAnimationFrame(captureUI);
+    }
+  }
+  
+  document.getElementById('Record').addEventListener('click', async () => {
+    const recordButton = document.getElementById('Record');
+    if (recordButton.classList.contains('off')) {
+      const fileName = prompt("Enter a name for the recording (e.g., meeting_2025):") || `recording_${Date.now()}`;
+      if (fileName) {
+        // Check if CCapture is defined
+        if (typeof CCapture === 'undefined') {
+          console.error('CCapture.js is not loaded. Check the script tag or network.');
+          alert('Recording failed: CCapture.js library is not available. Please refresh and try again.');
+          return;
+        }
+  
+        // Initialize CCapture.js with MP4 format
+        capturer = new CCapture({
+          format: 'mp4', // Switch to MP4
+          framerate: 15,
+          verbose: true,
+          quality: 80, // Adjust quality for MP4 (0-100)
+          name: fileName,
+          timeLimit: 0,
+          autoSaveTime: 0
+        });
+  
+        await captureUI(performance.now());
+        capturer.start();
+        isRecording = true;
+        captureUI(performance.now()); // Start the animation loop
+        recordButton.classList.remove('off');
+        recordButton.classList.add('on');
+        recordButton.title = 'Turn off recording';
+        console.log('UI recording started for AssemblePoint with CCapture.js');
+      }
+    } else if (recordButton.classList.contains('on')) {
+      if (isRecording && capturer) {
+        capturer.stop();
+        // Add a delay to ensure data is ready before saving
+        setTimeout(() => {
+          try {
+            capturer.save((blob) => {
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `${capturer.opts.name}.mp4`;
+              a.click();
+              URL.revokeObjectURL(url);
+              console.log('File saved successfully');
+            }, (error) => {
+              console.error('Save failed:', error);
+              alert('Recording save failed. Check console for details.');
+            });
+          } catch (err) {
+            console.error('Error during save:', err);
+            alert('Recording save failed due to an unexpected error.');
+          }
+        }, 1000); // 1-second delay
+        isRecording = false;
+        cancelAnimationFrame(animationFrameId);
+        recordButton.classList.remove('on');
+        recordButton.classList.add('off');
+        recordButton.title = 'Turn on recording';
+        console.log('UI recording stopped');
+      }
+    }
+  });
+  
   videoCallsbtn.addEventListener("click", () => {
     console.log("videoCall clicked");
     displayvideocallsDiv.style.display = 'grid';
