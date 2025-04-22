@@ -184,9 +184,7 @@ if (roomId) {
   }
 
   // Initialize canvas dimensions
-  canvas.width = 1920;
-  canvas.height = 1080;
-  console.log('Canvas initialized with width:', canvas.width, 'height:', canvas.height);
+  
   
   async function captureUI(timestamp) {
     try {
@@ -198,12 +196,15 @@ if (roomId) {
   
       const canvasSnapshot = await html2canvas(mainContainer, {
         useCORS: true,
-        scale: 5, // Increased to full resolution
+        scale: 2, // Increased to full resolution
         logging: true
       });
   
       // Use existing canvas dimensions
-      context.drawImage(canvasSnapshot, 0, 0, canvas.width, canvas.height);
+      // Resize and draw
+      canvas.width = canvasSnapshot.width;
+      canvas.height = canvasSnapshot.height;
+      context.drawImage(canvasSnapshot, 0, 0);
   
       // Dynamic overlay to ensure frame updates
       context.fillStyle = 'red';
