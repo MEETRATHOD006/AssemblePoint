@@ -610,13 +610,13 @@ header {
     background-color: rgb(17, 22, 29);
 }
 
-#mute, #hideV {
+#mute, #hideV #Record{
     cursor: pointer;
     color: rgba(255, 255, 255, 0.8);
     transition: color 0.3s ease;
 }
 
-#mute:hover, #hideV:hover {
+#mute:hover, #hideV:hover #Record:hover{
     color: rgba(0, 123, 255, 0.8);
 }
 
