@@ -26,27 +26,7 @@ let recordedChunks = [];
 let isRecording = false;
 const canvas = document.getElementById('recordingCanvas');
 const context = canvas.getContext('2d');
-let animationFrameId;
-
-
-async function captureUI() {
-  const mainContainer = document.querySelector('.mainContainder');
-  if (!mainContainer) return;
-
-  // Use html2canvas to render the UI to the canvas
-  await html2canvas(mainContainer, {
-    useCORS: true, // Handle cross-origin images if any
-    scale: window.devicePixelRatio // Ensure high resolution
-  }).then(canvasSnapshot => {
-    canvas.width = canvasSnapshot.width;
-    canvas.height = canvasSnapshot.height;
-    context.drawImage(canvasSnapshot, 0, 0);
-  });
-
-  if (isRecording) {
-    animationFrameId = requestAnimationFrame(captureUI);
-  }
-}
+let recordingInterval;
 
 // Connection established
 socket.on("connect", () => {
@@ -202,27 +182,60 @@ if (roomId) {
     }
   }
 
+  async function captureUI() {
+    try {
+      const mainContainer = document.querySelector('.mainContainder');
+      if (!mainContainer) {
+        console.error('Main container not found');
+        return;
+      }
+  
+      const canvasSnapshot = await html2canvas(mainContainer, {
+        useCORS: true,
+        scale: window.devicePixelRatio,
+        logging: true // Enable logging for debugging
+      });
+  
+      canvas.width = canvasSnapshot.width;
+      canvas.height = canvasSnapshot.height;
+      context.drawImage(canvasSnapshot, 0, 0);
+      console.log('Canvas updated at:', new Date().toISOString());
+    } catch (err) {
+      console.error('Error capturing UI:', err);
+    }
+  }
+  
   document.getElementById('Record').addEventListener('click', async () => {
     const recordButton = document.getElementById('Record');
     if (recordButton.classList.contains('off')) {
       // Prompt user to select save location on first click
       const fileName = prompt("Enter a name for the recording (e.g., meeting_2025):") || `recording_${Date.now()}`;
       if (fileName) {
-        mediaRecorder = new MediaRecorder(canvas.captureStream(15)); // 15 FPS to reduce performance impact
+        // Initialize canvas with initial capture
+        await captureUI();
+        mediaRecorder = new MediaRecorder(canvas.captureStream(30)); // 30 FPS
         mediaRecorder.ondataavailable = (event) => {
-          if (event.data.size > 0) recordedChunks.push(event.data);
+          if (event.data.size > 0) {
+            recordedChunks.push(event.data);
+            console.log('Data available, size:', event.data.size);
+          }
         };
         mediaRecorder.onstop = () => {
           const blob = new Blob(recordedChunks, { type: 'video/webm' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `${fileName}.webm`;
-          a.click();
-          URL.revokeObjectURL(url);
+          if (blob.size > 0) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${fileName}.webm`;
+            a.click();
+            URL.revokeObjectURL(url);
+          } else {
+            console.error('No data recorded, file size is 0');
+            alert('Recording failed: No data captured.');
+          }
           recordedChunks = [];
           isRecording = false;
-          cancelAnimationFrame(animationFrameId);
+          clearInterval(recordingInterval);
           recordButton.classList.remove('on');
           recordButton.classList.add('off');
           recordButton.title = 'Turn on recording';
@@ -230,7 +243,7 @@ if (roomId) {
   
         mediaRecorder.start();
         isRecording = true;
-        captureUI(); // Start capturing UI
+        recordingInterval = setInterval(captureUI, 1000 / 30); // Update every 33ms for 30 FPS
         recordButton.classList.remove('off');
         recordButton.classList.add('on');
         recordButton.title = 'Turn off recording';
