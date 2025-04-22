@@ -25,7 +25,7 @@ let mediaRecorder;
 let recordedChunks = [];
 let isRecording = false;
 const canvas = document.getElementById('recordingCanvas');
-const context = canvas.getContext('2d');
+const context = canvas.getContext('2d', { willReadFrequently: true }); // Enable for better performance
 let animationFrameId;
 
 // Connection established
@@ -182,7 +182,7 @@ if (roomId) {
     }
   }
 
-  async function captureUI() {
+  async function captureUI(timestamp) {
     try {
       const mainContainer = document.querySelector('.mainContainder');
       if (!mainContainer) {
@@ -196,13 +196,15 @@ if (roomId) {
         logging: true
       });
   
-      // Resize canvas and draw
+      // Resize and draw
       canvas.width = canvasSnapshot.width;
       canvas.height = canvasSnapshot.height;
       context.drawImage(canvasSnapshot, 0, 0);
   
-      // Force a redraw to ensure stream captures it
-      context.fillRect(0, 0, 1, 1); // Tiny redraw to trigger stream
+      // Add dynamic element to force stream updates
+      context.fillStyle = 'red';
+      context.font = '10px Arial';
+      context.fillText(`Frame: ${Math.floor(timestamp / 1000)}s`, 10, 20);
   
       console.log('Canvas updated at:', new Date().toISOString(), 'Width:', canvas.width, 'Height:', canvas.height);
     } catch (err) {
@@ -221,8 +223,16 @@ if (roomId) {
       const fileName = prompt("Enter a name for the recording (e.g., meeting_2025):") || `recording_${Date.now()}`;
       if (fileName) {
         // Initial capture to set up canvas
-        await captureUI();
-        mediaRecorder = new MediaRecorder(canvas.captureStream(30)); // 30 FPS
+        await captureUI(0);
+        // Optionally add audio stream
+        const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true }).catch(err => {
+          console.warn('Audio capture failed, proceeding without audio:', err);
+          return null;
+        });
+        const streams = [canvas.captureStream(30)];
+        if (audioStream) streams.push(audioStream);
+        const combinedStream = new MediaStream(streams.flatMap(stream => [stream.getVideoTracks()[0], stream.getAudioTracks()[0]]).filter(track => track));
+        mediaRecorder = new MediaRecorder(combinedStream, { mimeType: 'video/webm; codecs=vp9' });
         mediaRecorder.ondataavailable = (event) => {
           if (event.data.size > 0) {
             recordedChunks.push(event.data);
@@ -248,15 +258,15 @@ if (roomId) {
           recordedChunks = [];
           isRecording = false;
           cancelAnimationFrame(animationFrameId);
+          if (audioStream) audioStream.getTracks().forEach(track => track.stop());
           recordButton.classList.remove('on');
           recordButton.classList.add('off');
           recordButton.title = 'Turn on recording';
         };
   
-        // Start recording and continuous capture
-        mediaRecorder.start();
+        mediaRecorder.start(1000); // Emit data every 1 second
         isRecording = true;
-        captureUI(); // Kick off the loop
+        captureUI(performance.now()); // Start the animation loop
         recordButton.classList.remove('off');
         recordButton.classList.add('on');
         recordButton.title = 'Turn off recording';
