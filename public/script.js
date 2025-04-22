@@ -21,8 +21,9 @@ const photoInput = document.getElementById("photoInput");
 const sendPhotoBtn = document.getElementById("sendPhotoBtn");
 const muteMe = document.getElementById("mute");
 const hideV = document.getElementById("hideV");
-console.log(muteMe)
-console.log(hideV)
+let tabMediaRecorder;
+let tabRecordedChunks = [];
+let isTabRecording = false;
 
 // Connection established
 socket.on("connect", () => {
@@ -177,6 +178,57 @@ if (roomId) {
       individualsVideo.append(blankProfilePic)
     }
   }
+
+  document.getElementById('Record').addEventListener('click', async () => {
+    const recordButton = document.getElementById('Record');
+    if (recordButton.classList.contains('off')) {
+      try {
+        // Request screen/tab recording
+        const stream = await navigator.mediaDevices.getDisplayMedia({
+          video: { mediaSource: 'screen' },
+          audio: true // Include tab audio
+        });
+  
+        // Prompt user to select save location on first click
+        const fileName = prompt("Enter a name for the recording (e.g., meeting_2025):") || `tab_recording_${Date.now()}`;
+        if (fileName) {
+          tabMediaRecorder = new MediaRecorder(stream);
+          tabMediaRecorder.ondataavailable = (event) => {
+            if (event.data.size > 0) tabRecordedChunks.push(event.data);
+          };
+          tabMediaRecorder.onstop = () => {
+            const blob = new Blob(tabRecordedChunks, { type: 'video/webm' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${fileName}.webm`;
+            a.click();
+            URL.revokeObjectURL(url);
+            tabRecordedChunks = [];
+            isTabRecording = false;
+            recordButton.classList.remove('on');
+            recordButton.classList.add('off');
+            recordButton.title = 'Turn on recording';
+            stream.getTracks().forEach(track => track.stop()); // Stop the stream
+          };
+          tabMediaRecorder.start();
+          isTabRecording = true;
+          recordButton.classList.remove('off');
+          recordButton.classList.add('on');
+          recordButton.title = 'Turn off recording';
+          console.log('Tab recording started');
+        }
+      } catch (err) {
+        console.error('Error starting tab recording:', err);
+        alert('Failed to start recording. Please allow screen sharing permissions.');
+      }
+    } else if (recordButton.classList.contains('on')) {
+      if (isTabRecording && tabMediaRecorder) {
+        tabMediaRecorder.stop();
+        console.log('Tab recording stopped');
+      }
+    }
+  });
 
   videoCallsbtn.addEventListener("click", () => {
     console.log("videoCall clicked");
