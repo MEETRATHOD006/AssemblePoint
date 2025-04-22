@@ -192,7 +192,7 @@ if (roomId) {
   
       const canvasSnapshot = await html2canvas(mainContainer, {
         useCORS: true,
-        scale: 1,
+        scale: 0.5, // Reduced scale to improve performance
         logging: true
       });
   
@@ -231,12 +231,12 @@ if (roomId) {
           return;
         }
   
-        // Initialize CCapture.js with adjusted settings
+        // Initialize CCapture.js with GIF format
         capturer = new CCapture({
-          format: 'webm',
-          framerate: 15, // Reduced to 15 FPS to stabilize encoding
+          format: 'gif', // Switch to GIF to avoid WebM issues
+          framerate: 15,
           verbose: true,
-          quality: 80, // Reduced quality to avoid encoder issues
+          quality: 10, // Lower quality for GIF (1-30 range)
           name: fileName,
           timeLimit: 0,
           autoSaveTime: 0
@@ -261,7 +261,7 @@ if (roomId) {
               const url = URL.createObjectURL(blob);
               const a = document.createElement('a');
               a.href = url;
-              a.download = `${capturer.opts.name}.webm`;
+              a.download = `${capturer.opts.name}.gif`;
               a.click();
               URL.revokeObjectURL(url);
               console.log('File saved successfully');
