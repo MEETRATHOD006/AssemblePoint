@@ -183,9 +183,9 @@ if (roomId) {
     const recordButton = document.getElementById('Record');
     if (recordButton.classList.contains('off')) {
       try {
-        // Request screen/tab recording
+        // Request to record the current tab
         const stream = await navigator.mediaDevices.getDisplayMedia({
-          video: { mediaSource: 'screen' },
+          video: { mediaSource: 'screen', chromeMediaSource: 'tab' }, // Target the current tab
           audio: true // Include tab audio
         });
   
@@ -211,16 +211,24 @@ if (roomId) {
             recordButton.title = 'Turn on recording';
             stream.getTracks().forEach(track => track.stop()); // Stop the stream
           };
+  
+          // Handle stream ending (e.g., if user closes the tab or denies permission)
+          stream.getVideoTracks()[0].onended = () => {
+            if (isTabRecording && tabMediaRecorder.state !== 'inactive') {
+              tabMediaRecorder.stop();
+            }
+          };
+  
           tabMediaRecorder.start();
           isTabRecording = true;
           recordButton.classList.remove('off');
           recordButton.classList.add('on');
           recordButton.title = 'Turn off recording';
-          console.log('Tab recording started');
+          console.log('Tab recording started for AssemblePoint');
         }
       } catch (err) {
         console.error('Error starting tab recording:', err);
-        alert('Failed to start recording. Please allow screen sharing permissions.');
+        alert('Failed to start recording. Please allow screen sharing permissions for this tab.');
       }
     } else if (recordButton.classList.contains('on')) {
       if (isTabRecording && tabMediaRecorder) {
@@ -229,6 +237,7 @@ if (roomId) {
       }
     }
   });
+
 
   videoCallsbtn.addEventListener("click", () => {
     console.log("videoCall clicked");
