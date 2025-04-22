@@ -21,9 +21,32 @@ const photoInput = document.getElementById("photoInput");
 const sendPhotoBtn = document.getElementById("sendPhotoBtn");
 const muteMe = document.getElementById("mute");
 const hideV = document.getElementById("hideV");
-let tabMediaRecorder;
-let tabRecordedChunks = [];
-let isTabRecording = false;
+let mediaRecorder;
+let recordedChunks = [];
+let isRecording = false;
+const canvas = document.getElementById('recordingCanvas');
+const context = canvas.getContext('2d');
+let animationFrameId;
+
+
+async function captureUI() {
+  const mainContainer = document.querySelector('.mainContainder');
+  if (!mainContainer) return;
+
+  // Use html2canvas to render the UI to the canvas
+  await html2canvas(mainContainer, {
+    useCORS: true, // Handle cross-origin images if any
+    scale: window.devicePixelRatio // Ensure high resolution
+  }).then(canvasSnapshot => {
+    canvas.width = canvasSnapshot.width;
+    canvas.height = canvasSnapshot.height;
+    context.drawImage(canvasSnapshot, 0, 0);
+  });
+
+  if (isRecording) {
+    animationFrameId = requestAnimationFrame(captureUI);
+  }
+}
 
 // Connection established
 socket.on("connect", () => {
@@ -182,58 +205,41 @@ if (roomId) {
   document.getElementById('Record').addEventListener('click', async () => {
     const recordButton = document.getElementById('Record');
     if (recordButton.classList.contains('off')) {
-      try {
-        // Request to record the current tab
-        const stream = await navigator.mediaDevices.getDisplayMedia({
-          video: { mediaSource: 'screen', chromeMediaSource: 'tab' }, // Target the current tab
-          audio: true // Include tab audio
-        });
+      // Prompt user to select save location on first click
+      const fileName = prompt("Enter a name for the recording (e.g., meeting_2025):") || `recording_${Date.now()}`;
+      if (fileName) {
+        mediaRecorder = new MediaRecorder(canvas.captureStream(15)); // 15 FPS to reduce performance impact
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) recordedChunks.push(event.data);
+        };
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(recordedChunks, { type: 'video/webm' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${fileName}.webm`;
+          a.click();
+          URL.revokeObjectURL(url);
+          recordedChunks = [];
+          isRecording = false;
+          cancelAnimationFrame(animationFrameId);
+          recordButton.classList.remove('on');
+          recordButton.classList.add('off');
+          recordButton.title = 'Turn on recording';
+        };
   
-        // Prompt user to select save location on first click
-        const fileName = prompt("Enter a name for the recording (e.g., meeting_2025):") || `tab_recording_${Date.now()}`;
-        if (fileName) {
-          tabMediaRecorder = new MediaRecorder(stream);
-          tabMediaRecorder.ondataavailable = (event) => {
-            if (event.data.size > 0) tabRecordedChunks.push(event.data);
-          };
-          tabMediaRecorder.onstop = () => {
-            const blob = new Blob(tabRecordedChunks, { type: 'video/webm' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${fileName}.webm`;
-            a.click();
-            URL.revokeObjectURL(url);
-            tabRecordedChunks = [];
-            isTabRecording = false;
-            recordButton.classList.remove('on');
-            recordButton.classList.add('off');
-            recordButton.title = 'Turn on recording';
-            stream.getTracks().forEach(track => track.stop()); // Stop the stream
-          };
-  
-          // Handle stream ending (e.g., if user closes the tab or denies permission)
-          stream.getVideoTracks()[0].onended = () => {
-            if (isTabRecording && tabMediaRecorder.state !== 'inactive') {
-              tabMediaRecorder.stop();
-            }
-          };
-  
-          tabMediaRecorder.start();
-          isTabRecording = true;
-          recordButton.classList.remove('off');
-          recordButton.classList.add('on');
-          recordButton.title = 'Turn off recording';
-          console.log('Tab recording started for AssemblePoint');
-        }
-      } catch (err) {
-        console.error('Error starting tab recording:', err);
-        alert('Failed to start recording. Please allow screen sharing permissions for this tab.');
+        mediaRecorder.start();
+        isRecording = true;
+        captureUI(); // Start capturing UI
+        recordButton.classList.remove('off');
+        recordButton.classList.add('on');
+        recordButton.title = 'Turn off recording';
+        console.log('UI recording started for AssemblePoint');
       }
     } else if (recordButton.classList.contains('on')) {
-      if (isTabRecording && tabMediaRecorder) {
-        tabMediaRecorder.stop();
-        console.log('Tab recording stopped');
+      if (isRecording && mediaRecorder) {
+        mediaRecorder.stop();
+        console.log('UI recording stopped');
       }
     }
   });
