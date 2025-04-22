@@ -25,8 +25,9 @@ let mediaRecorder;
 let recordedChunks = [];
 let isRecording = false;
 const canvas = document.getElementById('recordingCanvas');
-const context = canvas.getContext('2d', { willReadFrequently: true }); // Enable for better performance
+const context = canvas.getContext('2d', { willReadFrequently: true });
 let animationFrameId;
+let frameCount = 0;
 
 // Connection established
 socket.on("connect", () => {
@@ -190,23 +191,24 @@ if (roomId) {
         return;
       }
   
+      // Use a cached snapshot if possible to reduce overhead
       const canvasSnapshot = await html2canvas(mainContainer, {
         useCORS: true,
-        scale: window.devicePixelRatio,
+        scale: 1, // Avoid oversampling to match 1080p
         logging: true
       });
   
-      // Resize and draw
-      canvas.width = canvasSnapshot.width;
-      canvas.height = canvasSnapshot.height;
-      context.drawImage(canvasSnapshot, 0, 0);
+      // Set to 1080p resolution
+      canvas.width = 1920;
+      canvas.height = 1080;
+      context.drawImage(canvasSnapshot, 0, 0, 1920, 1080);
   
-      // Add dynamic element to force stream updates
+      // Dynamic overlay to ensure frame updates
       context.fillStyle = 'red';
-      context.font = '10px Arial';
-      context.fillText(`Frame: ${Math.floor(timestamp / 1000)}s`, 10, 20);
+      context.font = '16px Arial';
+      context.fillText(`Frame: ${frameCount++} @ ${Math.floor(timestamp / 1000)}s`, 10, 30);
   
-      console.log('Canvas updated at:', new Date().toISOString(), 'Width:', canvas.width, 'Height:', canvas.height);
+      console.log('Canvas updated at:', new Date().toISOString(), 'FPS:', 1000 / (timestamp - (animationFrameId || timestamp)));
     } catch (err) {
       console.error('Error capturing UI:', err);
     }
@@ -219,12 +221,9 @@ if (roomId) {
   document.getElementById('Record').addEventListener('click', async () => {
     const recordButton = document.getElementById('Record');
     if (recordButton.classList.contains('off')) {
-      // Prompt user to select save location on first click
       const fileName = prompt("Enter a name for the recording (e.g., meeting_2025):") || `recording_${Date.now()}`;
       if (fileName) {
-        // Initial capture to set up canvas
-        await captureUI(0);
-        // Optionally add audio stream
+        await captureUI(performance.now());
         const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true }).catch(err => {
           console.warn('Audio capture failed, proceeding without audio:', err);
           return null;
@@ -264,9 +263,9 @@ if (roomId) {
           recordButton.title = 'Turn on recording';
         };
   
-        mediaRecorder.start(1000); // Emit data every 1 second
+        mediaRecorder.start(100); // Emit data every 100ms for smoother capture
         isRecording = true;
-        captureUI(performance.now()); // Start the animation loop
+        captureUI(performance.now());
         recordButton.classList.remove('off');
         recordButton.classList.add('on');
         recordButton.title = 'Turn off recording';
