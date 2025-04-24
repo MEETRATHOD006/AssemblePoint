@@ -176,13 +176,13 @@ if (roomId) {
     }
   }
 
-let mediaRecorder;
-let recordedChunks = [];
-let isRecording = false;
-const canvas = document.getElementById('recordingCanvas');
-const context = canvas.getContext('2d', { willReadFrequently: true });
-let animationFrameId;
-let frameCount = 0;
+  let mediaRecorder;
+  let recordedChunks = [];
+  let isRecording = false;
+  const canvas = document.getElementById('recordingCanvas');
+  const context = canvas.getContext('2d', { willReadFrequently: true });
+  let animationFrameId;
+  let frameCount = 0;
   
   // Initialize canvas dimensions
   async function captureUI(timestamp) {
@@ -245,7 +245,7 @@ let frameCount = 0;
         let mimeType = 'video/mp4; codecs=h264';
         if (!MediaRecorder.isTypeSupported(mimeType)) {
           console.warn('MP4 not supported, falling back to webm:', MediaRecorder.isTypeSupported('video/webm'));
-          mimeType = 'video/mp4; codecs=h264';
+          mimeType = 'video/webm; codecs=vp9';
         }
   // video/webm; codecs=vp9
         // Initialize mediaRecorder
@@ -275,7 +275,7 @@ let frameCount = 0;
           recordButton.title = 'Turn on recording';
         };
   
-        mediaRecorder.start(100); // Emit data every 100ms
+        mediaRecorder.start(33); // Emit data every 100ms
         isRecording = true;
         captureUI(performance.now()); // Start the animation loop
         recordButton.classList.remove('off');
