@@ -315,27 +315,27 @@ if (roomId) {
     // Assume PeerJS or similar sets up video streams here
   });
   
-  document.getElementById('startScreenShare').addEventListener('click', async () => {
-    try {
-      const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-      const mainVideoElement = document.getElementById('mainVideo');
-      if (mainVideoElement) mainVideoElement.srcObject = stream;
-      document.getElementById('startScreenShare').disabled = true;
-      document.getElementById('stopScreenShare').disabled = false;
-    } catch (err) {
-      console.error('Error starting screen share:', err);
-    }
-  });
+  // document.getElementById('startScreenShare').addEventListener('click', async () => {
+  //   try {
+  //     const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+  //     const mainVideoElement = document.getElementById('mainVideo');
+  //     if (mainVideoElement) mainVideoElement.srcObject = stream;
+  //     document.getElementById('startScreenShare').disabled = true;
+  //     document.getElementById('stopScreenShare').disabled = false;
+  //   } catch (err) {
+  //     console.error('Error starting screen share:', err);
+  //   }
+  // });
   
-  document.getElementById('stopScreenShare').addEventListener('click', () => {
-    const mainVideoElement = document.getElementById('mainVideo');
-    if (mainVideoElement && mainVideoElement.srcObject) {
-      mainVideoElement.srcObject.getTracks().forEach(track => track.stop());
-      mainVideoElement.srcObject = null;
-      document.getElementById('startScreenShare').disabled = false;
-      document.getElementById('stopScreenShare').disabled = true;
-    }
-  });
+  // document.getElementById('stopScreenShare').addEventListener('click', () => {
+  //   const mainVideoElement = document.getElementById('mainVideo');
+  //   if (mainVideoElement && mainVideoElement.srcObject) {
+  //     mainVideoElement.srcObject.getTracks().forEach(track => track.stop());
+  //     mainVideoElement.srcObject = null;
+  //     document.getElementById('startScreenShare').disabled = false;
+  //     document.getElementById('stopScreenShare').disabled = true;
+  //   }
+  // });
   
   videoCallsbtn.addEventListener("click", () => {
     console.log("videoCall clicked");
