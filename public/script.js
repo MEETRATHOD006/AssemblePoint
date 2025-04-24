@@ -206,7 +206,6 @@ if (roomId) {
         console.error('Main container not found');
         return;
       }
-      // Capture static UI without hiding the main video (since we use a separate video element)
       staticUISnapshot = await html2canvas(mainContainer, {
         useCORS: true,
         scale: 1,
@@ -228,7 +227,7 @@ if (roomId) {
   
       // Draw video directly from recordingVideoElement
       if (recordingVideoElement && recordingVideoElement.readyState >= 2) { // HAVE_CURRENT_DATA or higher
-        const videoRect = mainVideoElement.getBoundingClientRect();
+        const videoRect = mainVideoElement ? mainVideoElement.getBoundingClientRect() : { left: 0, top: 0, width: canvas.width, height: canvas.height };
         const containerRect = document.querySelector('.mainContainder').getBoundingClientRect();
         const x = videoRect.left - containerRect.left;
         const y = videoRect.top - containerRect.top;
@@ -263,11 +262,12 @@ if (roomId) {
       if (fileName) {
         mainVideoElement = document.getElementById('mainVideo');
         recordingVideoElement = document.getElementById('recordingVideo');
-        if (mainVideoElement.srcObject) {
-          recordingVideoElement.srcObject = mainVideoElement.srcObject; // Sync the stream
+        if (mainVideoElement && mainVideoElement.srcObject) {
+          recordingVideoElement.srcObject = mainVideoElement.srcObject; // Sync the stream only if present
           await captureStaticUI();
         } else {
-          console.warn('No video stream available in mainVideo, proceeding without video');
+          console.warn('No video stream available in mainVideo, proceeding with static UI only');
+          await captureStaticUI(); // Proceed without video if no stream
         }
         await captureUI(performance.now());
         const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true }).catch(err => {
@@ -335,9 +335,7 @@ if (roomId) {
     console.log('videoCall clicked');
     mainVideoElement = document.getElementById('mainVideo');
     recordingVideoElement = document.getElementById('recordingVideo');
-    if (mainVideoElement.srcObject) {
-      recordingVideoElement.srcObject = mainVideoElement.srcObject;
-    }
+    // Assume stream setup happens here (e.g., via PeerJS) - sync when stream is set
   });
   
   document.getElementById('startScreenShare').addEventListener('click', async () => {
@@ -345,8 +343,8 @@ if (roomId) {
       const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
       mainVideoElement = document.getElementById('mainVideo');
       recordingVideoElement = document.getElementById('recordingVideo');
-      mainVideoElement.srcObject = stream;
-      recordingVideoElement.srcObject = stream;
+      if (mainVideoElement) mainVideoElement.srcObject = stream;
+      if (recordingVideoElement) recordingVideoElement.srcObject = stream;
       document.getElementById('startScreenShare').disabled = true;
       document.getElementById('stopScreenShare').disabled = false;
     } catch (err) {
@@ -358,7 +356,7 @@ if (roomId) {
     if (mainVideoElement && mainVideoElement.srcObject) {
       mainVideoElement.srcObject.getTracks().forEach(track => track.stop());
       mainVideoElement.srcObject = null;
-      recordingVideoElement.srcObject = null;
+      if (recordingVideoElement) recordingVideoElement.srcObject = null;
       document.getElementById('startScreenShare').disabled = false;
       document.getElementById('stopScreenShare').disabled = true;
     }
