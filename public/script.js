@@ -327,6 +327,7 @@ if (roomId) {
   async function processVideo(blob, fileName, mimeType) {
     const formData = new FormData();
     formData.append('video', blob, 'input.webm');
+    console.log('Sending video, blob size:', blob.size); // Debug
   
     const maxRetries = 3;
     let attempt = 0;
