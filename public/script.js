@@ -236,7 +236,7 @@ if (roomId) {
           console.warn('Audio capture failed, proceeding without audio:', err);
           return null;
         });
-        const canvasStream = canvas.captureStream(15); // 15 FPS target
+        const canvasStream = canvas.captureStream(30); // 15 FPS target
         const streams = [canvasStream];
         if (audioStream) streams.push(audioStream);
         const combinedStream = new MediaStream(streams.flatMap(stream => [stream.getVideoTracks()[0], stream.getAudioTracks()[0]]).filter(track => track));
