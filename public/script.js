@@ -176,6 +176,7 @@ if (roomId) {
     }
   }
 
+  // Add recording variables and functions
   let mediaRecorder;
   let recordedChunks = [];
   let isRecording = false;
@@ -183,42 +184,66 @@ if (roomId) {
   const context = canvas.getContext('2d', { willReadFrequently: true });
   let animationFrameId;
   let frameCount = 0;
+  let lastTimestamp = 0;
+  let staticUISnapshot = null;
+  const videoElement = document.getElementById('mainVideo');
   
   // Initialize canvas dimensions
-  async function captureUI(timestamp) {
+  canvas.width = 1920;
+  canvas.height = 1080;
+  console.log('Canvas initialized with width:', canvas.width, 'height:', canvas.height);
+  
+  // Pre-capture static UI
+  async function captureStaticUI() {
     try {
       const mainContainer = document.querySelector('.mainContainder');
       if (!mainContainer) {
         console.error('Main container not found');
         return;
       }
-  
-      const canvasSnapshot = await html2canvas(mainContainer, {
+      // Temporarily hide video to capture static UI
+      videoElement.style.visibility = 'hidden';
+      staticUISnapshot = await html2canvas(mainContainer, {
         useCORS: true,
-        scale: 1, // Increased to full resolution
+        scale: 1, // Use scale 1 for static parts to reduce load
         logging: true
       });
+      videoElement.style.visibility = 'visible';
+      console.log('Static UI captured at resolution:', staticUISnapshot.width, 'x', staticUISnapshot.height);
+    } catch (err) {
+      console.error('Error capturing static UI:', err);
+    }
+  }
   
-      // Use existing canvas dimensions
-      // Resize and draw
-      canvas.width = canvasSnapshot.width;
-      canvas.height = canvasSnapshot.height;
-      context.drawImage(canvasSnapshot, 0, 0);
+  async function captureUI(timestamp) {
+    try {
+      // Draw static UI (only once captured)
+      if (staticUISnapshot) {
+        context.drawImage(staticUISnapshot, 0, 0, canvas.width, canvas.height);
+      }
   
-      // Dynamic overlay to ensure frame updates
+      // Draw video directly
+      if (videoElement.readyState >= 2) { // HAVE_CURRENT_DATA or higher
+        // Adjust position and size to match video's position in layout
+        const videoRect = videoElement.getBoundingClientRect();
+        const containerRect = document.querySelector('.mainContainder').getBoundingClientRect();
+        const x = videoRect.left - containerRect.left;
+        const y = videoRect.top - containerRect.top;
+        context.drawImage(videoElement, x, y, videoRect.width, videoRect.height);
+      }
+  
+      // Dynamic overlay
       context.fillStyle = 'red';
       context.font = '16px Arial';
       context.fillText(`Frame: ${frameCount++} @ ${Math.floor(timestamp / 1000)}s`, 10, 30);
   
-      const fps = 1000 / (timestamp - (animationFrameId || timestamp));
-      console.log('Canvas updated at:', new Date().toISOString(), 'FPS:', fps, 'Expected Resolution:', canvasSnapshot.width, 'x', canvasSnapshot.height);
-      if (isRecording) {
-        if (mediaRecorder && mediaRecorder.state === 'recording') {
-          const stream = canvas.captureStream(30); // 15 FPS target
-        }
-      }
+      // Calculate actual FPS
+      const delta = timestamp - (lastTimestamp || timestamp);
+      const fps = 1000 / delta;
+      lastTimestamp = timestamp;
+      console.log('Canvas updated at:', new Date().toISOString(), 'FPS:', fps.toFixed(2), 'Resolution:', canvas.width, 'x', canvas.height);
     } catch (err) {
-      console.error('Error capturing UI:', err);
+      console.error('Error in captureUI:', err);
     }
   
     if (isRecording) {
@@ -231,12 +256,14 @@ if (roomId) {
     if (recordButton.classList.contains('off')) {
       const fileName = prompt("Enter a name for the recording (e.g., meeting_2025):") || `recording_${Date.now()}`;
       if (fileName) {
+        // Capture static UI once before recording
+        await captureStaticUI();
         await captureUI(performance.now());
         const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true }).catch(err => {
           console.warn('Audio capture failed, proceeding without audio:', err);
           return null;
         });
-        const canvasStream = canvas.captureStream(30); // 15 FPS target
+        const canvasStream = canvas.captureStream(30); // Target 30 FPS
         const streams = [canvasStream];
         if (audioStream) streams.push(audioStream);
         const combinedStream = new MediaStream(streams.flatMap(stream => [stream.getVideoTracks()[0], stream.getAudioTracks()[0]]).filter(track => track));
@@ -247,9 +274,9 @@ if (roomId) {
           console.warn('MP4 not supported, falling back to webm:', MediaRecorder.isTypeSupported('video/webm'));
           mimeType = 'video/webm; codecs=vp9';
         }
-  // video/webm; codecs=vp9
+  
         // Initialize mediaRecorder
-        recordedChunks = []; // Reset chunks for new recording
+        recordedChunks = [];
         mediaRecorder = new MediaRecorder(combinedStream, { mimeType });
         mediaRecorder.ondataavailable = (event) => {
           if (event.data.size > 0) recordedChunks.push(event.data);
@@ -275,13 +302,13 @@ if (roomId) {
           recordButton.title = 'Turn on recording';
         };
   
-        mediaRecorder.start(33); // Emit data every 100ms
+        mediaRecorder.start(33); // Align with 30 FPS
         isRecording = true;
-        captureUI(performance.now()); // Start the animation loop
+        captureUI(performance.now());
         recordButton.classList.remove('off');
         recordButton.classList.add('on');
         recordButton.title = 'Turn off recording';
-        console.log('UI recording started with MediaRecorder');
+        console.log('UI recording started with MediaRecorder, target FPS:', 30);
       }
     } else if (recordButton.classList.contains('on')) {
       if (isRecording && mediaRecorder) {
