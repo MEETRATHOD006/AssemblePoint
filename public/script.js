@@ -204,7 +204,7 @@ if (roomId) {
       // Capture the entire UI, including dynamic changes
       const uiSnapshot = await html2canvas(mainContainer, {
         useCORS: true,
-        scale: 1, // Adjust scale based on canvas resolution
+        scale: 1,
         logging: true
       });
   
@@ -253,15 +253,15 @@ if (roomId) {
           console.warn('Audio capture failed, proceeding without audio:', err);
           return null;
         });
-        const canvasStream = canvas.captureStream(30);
+        const canvasStream = canvas.captureStream(30); // Target 30 FPS, actual may be lower
         const streams = [canvasStream];
         if (audioStream) streams.push(audioStream);
         const combinedStream = new MediaStream(streams.flatMap(stream => [stream.getVideoTracks()[0], stream.getAudioTracks()[0]]).filter(track => track));
   
-        let mimeType = 'video/mp4; codecs=h264';
+        let mimeType = 'video/webm; codecs=vp9'; // Use WebM for compatibility
         if (!MediaRecorder.isTypeSupported(mimeType)) {
-          console.warn('MP4 not supported, falling back to webm:', MediaRecorder.isTypeSupported('video/webm'));
-          mimeType = 'video/webm; codecs=vp9';
+          console.warn('WebM not supported, falling back to default');
+          mimeType = 'video/webm';
         }
   
         recordedChunks = [];
@@ -269,16 +269,30 @@ if (roomId) {
         mediaRecorder.ondataavailable = (event) => {
           if (event.data.size > 0) recordedChunks.push(event.data);
         };
-        mediaRecorder.onstop = () => {
-          const blob = new Blob(recordedChunks, { type: mimeType });
-          if (blob.size > 0) {
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${fileName}.${mimeType.split(';')[0].split('/')[1]}`;
-            a.click();
-            URL.revokeObjectURL(url);
-            console.log('File saved successfully, size:', blob.size, 'bytes');
+        mediaRecorder.onstop = async () => {
+          const rawBlob = new Blob(recordedChunks, { type: mimeType });
+          if (rawBlob.size > 0) {
+            console.log('Raw recording completed, size:', rawBlob.size, 'bytes');
+  
+            // Simulate post-processing (replace with actual FFmpeg call in production)
+            const processedBlob = await processVideo(rawBlob, fileName, mimeType);
+            if (processedBlob) {
+              const url = URL.createObjectURL(processedBlob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `${fileName}_processed.${mimeType.split(';')[0].split('/')[1]}`;
+              a.click();
+              URL.revokeObjectURL(url);
+              console.log('Processed file saved successfully, size:', processedBlob.size, 'bytes');
+            } else {
+              console.error('Processing failed, providing raw file');
+              const url = URL.createObjectURL(rawBlob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `${fileName}_raw.${mimeType.split(';')[0].split('/')[1]}`;
+              a.click();
+              URL.revokeObjectURL(url);
+            }
           } else {
             console.error('No data recorded, file size is 0');
             alert('Recording failed: No data captured.');
@@ -291,7 +305,7 @@ if (roomId) {
           recordButton.title = 'Turn on recording';
         };
   
-        mediaRecorder.start(33);
+        mediaRecorder.start(33); // Target ~30 FPS
         isRecording = true;
         captureUI(performance.now());
         recordButton.classList.remove('off');
@@ -308,6 +322,28 @@ if (roomId) {
       }
     }
   });
+  
+  // Placeholder function to simulate FFmpeg post-processing
+  async function processVideo(blob, fileName, mimeType) {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const arrayBuffer = event.target.result;
+        const uint8Array = new Uint8Array(arrayBuffer);
+  
+        // Simulate FFmpeg processing (client-side placeholder)
+        console.log('Simulating FFmpeg processing to upscale FPS to 30...');
+        // In a real scenario, send uint8Array to a server for FFmpeg processing
+        // Example server call: fetch('/process', { method: 'POST', body: uint8Array })
+        // For now, delay and return the original blob with a message
+        setTimeout(() => {
+          console.log('Processing complete (simulated)');
+          resolve(blob); // Replace with processed blob from server
+        }, 2000); // Simulate 2-second processing
+      };
+      reader.readAsArrayBuffer(blob);
+    });
+  }
   
   // Existing event listeners for video calls and screen sharing remain unchanged...
   document.getElementById('videocalls').addEventListener('click', () => {
@@ -336,7 +372,6 @@ if (roomId) {
       document.getElementById('stopScreenShare').disabled = true;
     }
   });
-
   videoCallsbtn.addEventListener("click", () => {
     console.log("videoCall clicked");
     displayvideocallsDiv.style.display = 'grid';
