@@ -186,7 +186,8 @@ if (roomId) {
   let frameCount = 0;
   let lastTimestamp = 0;
   let staticUISnapshot = null;
-  const videoElement = document.getElementById('mainVideo');
+  let recordingVideoElement = null;
+  let mainVideoElement = null;
   
   // Initialize canvas dimensions
   canvas.width = 1920;
@@ -195,20 +196,22 @@ if (roomId) {
   
   // Pre-capture static UI
   async function captureStaticUI() {
+    if (!mainVideoElement || !recordingVideoElement) {
+      console.warn('Main or recording video element not available for static UI capture');
+      return;
+    }
     try {
       const mainContainer = document.querySelector('.mainContainder');
       if (!mainContainer) {
         console.error('Main container not found');
         return;
       }
-      // Temporarily hide video to capture static UI
-      videoElement.style.visibility = 'hidden';
+      // Capture static UI without hiding the main video (since we use a separate video element)
       staticUISnapshot = await html2canvas(mainContainer, {
         useCORS: true,
-        scale: 1, // Use scale 1 for static parts to reduce load
+        scale: 1,
         logging: true
       });
-      videoElement.style.visibility = 'visible';
       console.log('Static UI captured at resolution:', staticUISnapshot.width, 'x', staticUISnapshot.height);
     } catch (err) {
       console.error('Error capturing static UI:', err);
@@ -216,20 +219,22 @@ if (roomId) {
   }
   
   async function captureUI(timestamp) {
+    if (!isRecording) return; // Stop if not recording
     try {
-      // Draw static UI (only once captured)
+      // Draw static UI
       if (staticUISnapshot) {
         context.drawImage(staticUISnapshot, 0, 0, canvas.width, canvas.height);
       }
   
-      // Draw video directly
-      if (videoElement.readyState >= 2) { // HAVE_CURRENT_DATA or higher
-        // Adjust position and size to match video's position in layout
-        const videoRect = videoElement.getBoundingClientRect();
+      // Draw video directly from recordingVideoElement
+      if (recordingVideoElement && recordingVideoElement.readyState >= 2) { // HAVE_CURRENT_DATA or higher
+        const videoRect = mainVideoElement.getBoundingClientRect();
         const containerRect = document.querySelector('.mainContainder').getBoundingClientRect();
         const x = videoRect.left - containerRect.left;
         const y = videoRect.top - containerRect.top;
-        context.drawImage(videoElement, x, y, videoRect.width, videoRect.height);
+        context.drawImage(recordingVideoElement, x, y, videoRect.width, videoRect.height);
+      } else {
+        console.warn('Recording video element not ready or null');
       }
   
       // Dynamic overlay
@@ -256,26 +261,30 @@ if (roomId) {
     if (recordButton.classList.contains('off')) {
       const fileName = prompt("Enter a name for the recording (e.g., meeting_2025):") || `recording_${Date.now()}`;
       if (fileName) {
-        // Capture static UI once before recording
-        await captureStaticUI();
+        mainVideoElement = document.getElementById('mainVideo');
+        recordingVideoElement = document.getElementById('recordingVideo');
+        if (mainVideoElement.srcObject) {
+          recordingVideoElement.srcObject = mainVideoElement.srcObject; // Sync the stream
+          await captureStaticUI();
+        } else {
+          console.warn('No video stream available in mainVideo, proceeding without video');
+        }
         await captureUI(performance.now());
         const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true }).catch(err => {
           console.warn('Audio capture failed, proceeding without audio:', err);
           return null;
         });
-        const canvasStream = canvas.captureStream(30); // Target 30 FPS
+        const canvasStream = canvas.captureStream(30);
         const streams = [canvasStream];
         if (audioStream) streams.push(audioStream);
         const combinedStream = new MediaStream(streams.flatMap(stream => [stream.getVideoTracks()[0], stream.getAudioTracks()[0]]).filter(track => track));
   
-        // Check for MP4 support
         let mimeType = 'video/mp4; codecs=h264';
         if (!MediaRecorder.isTypeSupported(mimeType)) {
           console.warn('MP4 not supported, falling back to webm:', MediaRecorder.isTypeSupported('video/webm'));
           mimeType = 'video/webm; codecs=vp9';
         }
   
-        // Initialize mediaRecorder
         recordedChunks = [];
         mediaRecorder = new MediaRecorder(combinedStream, { mimeType });
         mediaRecorder.ondataavailable = (event) => {
@@ -297,12 +306,13 @@ if (roomId) {
           }
           if (audioStream) audioStream.getTracks().forEach(track => track.stop());
           isRecording = false;
+          if (animationFrameId) cancelAnimationFrame(animationFrameId);
           recordButton.classList.remove('on');
           recordButton.classList.add('off');
           recordButton.title = 'Turn on recording';
         };
   
-        mediaRecorder.start(33); // Align with 30 FPS
+        mediaRecorder.start(33);
         isRecording = true;
         captureUI(performance.now());
         recordButton.classList.remove('off');
@@ -313,8 +323,44 @@ if (roomId) {
     } else if (recordButton.classList.contains('on')) {
       if (isRecording && mediaRecorder) {
         mediaRecorder.stop();
+        isRecording = false;
+        if (animationFrameId) cancelAnimationFrame(animationFrameId);
         console.log('UI recording stopped');
       }
+    }
+  });
+  
+  // Sync recording video when a stream is added to main video (adjust based on your app logic)
+  document.getElementById('videocalls').addEventListener('click', () => {
+    console.log('videoCall clicked');
+    mainVideoElement = document.getElementById('mainVideo');
+    recordingVideoElement = document.getElementById('recordingVideo');
+    if (mainVideoElement.srcObject) {
+      recordingVideoElement.srcObject = mainVideoElement.srcObject;
+    }
+  });
+  
+  document.getElementById('startScreenShare').addEventListener('click', async () => {
+    try {
+      const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+      mainVideoElement = document.getElementById('mainVideo');
+      recordingVideoElement = document.getElementById('recordingVideo');
+      mainVideoElement.srcObject = stream;
+      recordingVideoElement.srcObject = stream;
+      document.getElementById('startScreenShare').disabled = true;
+      document.getElementById('stopScreenShare').disabled = false;
+    } catch (err) {
+      console.error('Error starting screen share:', err);
+    }
+  });
+  
+  document.getElementById('stopScreenShare').addEventListener('click', () => {
+    if (mainVideoElement && mainVideoElement.srcObject) {
+      mainVideoElement.srcObject.getTracks().forEach(track => track.stop());
+      mainVideoElement.srcObject = null;
+      recordingVideoElement.srcObject = null;
+      document.getElementById('startScreenShare').disabled = false;
+      document.getElementById('stopScreenShare').disabled = true;
     }
   });
 
