@@ -21,13 +21,6 @@ const photoInput = document.getElementById("photoInput");
 const sendPhotoBtn = document.getElementById("sendPhotoBtn");
 const muteMe = document.getElementById("mute");
 const hideV = document.getElementById("hideV");
-let mediaRecorder;
-let recordedChunks = [];
-let isRecording = false;
-const canvas = document.getElementById('recordingCanvas');
-const context = canvas.getContext('2d', { willReadFrequently: true });
-let animationFrameId;
-let frameCount = 0;
 
 // Connection established
 socket.on("connect", () => {
@@ -183,9 +176,15 @@ if (roomId) {
     }
   }
 
+let mediaRecorder;
+let recordedChunks = [];
+let isRecording = false;
+const canvas = document.getElementById('recordingCanvas');
+const context = canvas.getContext('2d', { willReadFrequently: true });
+let animationFrameId;
+let frameCount = 0;
+  
   // Initialize canvas dimensions
-  
-  
   async function captureUI(timestamp) {
     try {
       const mainContainer = document.querySelector('.mainContainder');
@@ -246,9 +245,9 @@ if (roomId) {
         let mimeType = 'video/mp4; codecs=h264';
         if (!MediaRecorder.isTypeSupported(mimeType)) {
           console.warn('MP4 not supported, falling back to webm:', MediaRecorder.isTypeSupported('video/webm'));
-          mimeType = 'video/webm; codecs=vp9';
+          mimeType = 'video/mp4; codecs=h264';
         }
-  
+  // video/webm; codecs=vp9
         // Initialize mediaRecorder
         recordedChunks = []; // Reset chunks for new recording
         mediaRecorder = new MediaRecorder(combinedStream, { mimeType });
@@ -292,7 +291,7 @@ if (roomId) {
     }
   });
 
-  
+
   videoCallsbtn.addEventListener("click", () => {
     console.log("videoCall clicked");
     displayvideocallsDiv.style.display = 'grid';
