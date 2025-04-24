@@ -176,6 +176,7 @@ if (roomId) {
     }
   }
 
+  // Add recording variables and functions
   let mediaRecorder;
   let recordedChunks = [];
   let isRecording = false;
@@ -203,7 +204,7 @@ if (roomId) {
       // Capture the entire UI, including dynamic changes
       const uiSnapshot = await html2canvas(mainContainer, {
         useCORS: true,
-        scale: 1,
+        scale: 1, // Adjust scale based on canvas resolution
         logging: true
       });
   
@@ -252,15 +253,15 @@ if (roomId) {
           console.warn('Audio capture failed, proceeding without audio:', err);
           return null;
         });
-        const canvasStream = canvas.captureStream(30); // Target 30 FPS, actual may be lower
+        const canvasStream = canvas.captureStream(30);
         const streams = [canvasStream];
         if (audioStream) streams.push(audioStream);
         const combinedStream = new MediaStream(streams.flatMap(stream => [stream.getVideoTracks()[0], stream.getAudioTracks()[0]]).filter(track => track));
   
-        let mimeType = 'video/webm; codecs=vp9'; // Use WebM for compatibility
+        let mimeType = 'video/mp4; codecs=h264';
         if (!MediaRecorder.isTypeSupported(mimeType)) {
-          console.warn('WebM not supported, falling back to default');
-          mimeType = 'video/webm';
+          console.warn('MP4 not supported, falling back to webm:', MediaRecorder.isTypeSupported('video/webm'));
+          mimeType = 'video/webm; codecs=vp9';
         }
   
         recordedChunks = [];
@@ -268,31 +269,16 @@ if (roomId) {
         mediaRecorder.ondataavailable = (event) => {
           if (event.data.size > 0) recordedChunks.push(event.data);
         };
-        mediaRecorder.onstop = async () => {
-          const rawBlob = new Blob(recordedChunks, { type: mimeType });
-          if (rawBlob.size > 0) {
-            console.log('Raw recording completed, size:', rawBlob.size, 'bytes');
-            document.getElementById('loading').style.display = 'block'; // Show loading
-            const processedBlob = await processVideo(rawBlob, fileName, mimeType);
-            document.getElementById('loading').style.display = 'none'; // Hide loading
-            if (processedBlob) {
-              const url = URL.createObjectURL(processedBlob);
-              const a = document.createElement('a');
-              a.href = url;
-              a.download = `${fileName}_processed.${mimeType.split(';')[0].split('/')[1]}`;
-              a.click();
-              URL.revokeObjectURL(url);
-              console.log('Processed file saved successfully, size:', processedBlob.size, 'bytes');
-            } else {
-              console.error('Processing failed, providing raw file');
-              alert('Processing failed due to a server error. Downloading raw file instead.');
-              const url = URL.createObjectURL(rawBlob);
-              const a = document.createElement('a');
-              a.href = url;
-              a.download = `${fileName}_raw.${mimeType.split(';')[0].split('/')[1]}`;
-              a.click();
-              URL.revokeObjectURL(url);
-            }
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(recordedChunks, { type: mimeType });
+          if (blob.size > 0) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${fileName}.${mimeType.split(';')[0].split('/')[1]}`;
+            a.click();
+            URL.revokeObjectURL(url);
+            console.log('File saved successfully, size:', blob.size, 'bytes');
           } else {
             console.error('No data recorded, file size is 0');
             alert('Recording failed: No data captured.');
@@ -305,7 +291,7 @@ if (roomId) {
           recordButton.title = 'Turn on recording';
         };
   
-        mediaRecorder.start(33); // Target ~30 FPS
+        mediaRecorder.start(33);
         isRecording = true;
         captureUI(performance.now());
         recordButton.classList.remove('off');
@@ -323,42 +309,6 @@ if (roomId) {
     }
   });
   
-  // Updated processVideo function to use the Render server
-  async function processVideo(blob, fileName, mimeType) {
-    const formData = new FormData();
-    formData.append('video', blob, 'input.webm');
-    console.log('Sending video, blob size:', blob.size); // Debug
-  
-    const maxRetries = 3;
-    let attempt = 0;
-  
-    while (attempt < maxRetries) {
-      try {
-        const response = await fetch('https://ffmpegserver.onrender.com/process', {
-          method: 'POST',
-          body: formData
-        });
-  
-        if (response.ok) {
-          const processedBlob = await response.blob();
-          console.log('Video processed successfully on server');
-          return processedBlob;
-        } else {
-          console.error('Server processing failed:', response.statusText);
-          attempt++;
-          if (attempt === maxRetries) return null;
-          await new Promise(resolve => setTimeout(resolve, 2000));
-        }
-      } catch (err) {
-        console.error('Fetch error:', err);
-        attempt++;
-        if (attempt === maxRetries) return null;
-        await new Promise(resolve => setTimeout(resolve, 2000));
-      }
-    }
-    return null;
-  }
-  
   // Existing event listeners for video calls and screen sharing remain unchanged...
   document.getElementById('videocalls').addEventListener('click', () => {
     console.log('videoCall clicked');
@@ -367,14 +317,13 @@ if (roomId) {
   
   document.getElementById('startScreenShare').addEventListener('click', async () => {
     try {
-      const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+      const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
       const mainVideoElement = document.getElementById('mainVideo');
       if (mainVideoElement) mainVideoElement.srcObject = stream;
       document.getElementById('startScreenShare').disabled = true;
       document.getElementById('stopScreenShare').disabled = false;
     } catch (err) {
       console.error('Error starting screen share:', err);
-      alert('Permission denied to share screen. Please allow access in the browser prompt.');
     }
   });
   
