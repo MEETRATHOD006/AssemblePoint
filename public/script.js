@@ -582,28 +582,17 @@ socket.on("active-screen-shared", (roomId, sharedUserId) => {
     messageInput.value = "";
   });
 
-  sendPhotoBtn.addEventListener("click", () => {
-  photoInput.click();
-});
+  // Add keyboard shortcut for sending message with Enter
+  messageInput.addEventListener("keypress", (event) => {
+    if (event.key === "Enter" && !event.ctrlKey) {
+      event.preventDefault(); // Prevent default behavior (e.g., new line)
+      sendBtn.click(); // Trigger the send button click
+    }
+  });
 
-  // When a file is selected...
-  // photoInput.addEventListener("change", function() {
-  //   if (photoInput.files && photoInput.files[0]) {
-  //     resizeImage(photoInput.files[0], function(resizedImage) {
-  //       const file = photoInput.files[0];
-  //       const reader = new FileReader();
-  //       reader.onload = function(e) {
-  //         const sender = senderNameInput.value.trim() || 'Anonymous';
-  //         const photoDataUrl = e.target.result; // Base64 encoded image data
-  //         // Emit the photo to the server along with the room and sender info.
-  //         socket.emit("send-photo", { roomId, sender, photo: photoDataUrl, senderId: myPeerId });
-  //         // Optionally, display the photo locally (optimistic update)
-  //         appendPhotoMessage(sender, photoDataUrl, new Date(), "me");
-  //       };
-  //       reader.readAsDataURL(file);
-  //     });
-  //   }
-  // });
+  sendPhotoBtn.addEventListener("click", () => {
+    photoInput.click();
+  });
 
   photoInput.addEventListener("change", function() {
     if (photoInput.files && photoInput.files[0]) {
@@ -625,6 +614,14 @@ socket.on("active-screen-shared", (roomId, sharedUserId) => {
             appendPhotoMessage(sender, photoUrl, new Date(), who, message);
         })
         .catch(error => console.error("Error uploading photo:", error));
+    }
+  });
+
+  // Add keyboard shortcut for triggering photo upload with Ctrl + Enter
+  document.addEventListener("keydown", (event) => {
+    if (event.ctrlKey && event.key === "Enter") {
+      event.preventDefault(); // Prevent default behavior
+      sendPhotoBtn.click(); // Trigger the send photo button click
     }
   });
 
