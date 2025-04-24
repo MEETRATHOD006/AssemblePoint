@@ -484,24 +484,20 @@ function stopScreenShare() {
     }
   }
 
-  // Restore your camera video in #videoPlayer
-  const videoElement = document.querySelector("#videoPlayer video");
-  if (videoElement && localStream) {
-    videoElement.srcObject = localStream; // Restore your camera stream
-    videoElement.autoplay = true;
-    videoElement.muted = true;
-    videoElement.play().catch(err => console.error("Error playing local video:", err));
-  } else if (!videoElement && localStream) {
-    // If no video element exists, create one
-    const newVideoElement = document.createElement("video");
-    newVideoElement.srcObject = localStream;
-    newVideoElement.autoplay = true;
-    newVideoElement.muted = true;
-    document.getElementById("videoPlayer").appendChild(newVideoElement);
-    newVideoElement.play().catch(err => console.error("Error playing local video:", err));
+  // Stop all tracks in the screen-sharing stream to end the session
+  if (currentScreenStream) {
+    currentScreenStream.getTracks().forEach(track => track.stop());
   }
 
-  // Restore your camera video in your preview in #displayvideocalls
+  // Clear the #videoPlayer content
+  const videoElement = document.querySelector("#videoPlayer video");
+  if (videoElement) {
+    videoElement.srcObject = null; // Clear the video stream
+    videoElement.remove(); // Remove the video element
+  }
+  document.getElementById("videoPlayer").innerHTML = ""; // Ensure #videoPlayer is empty
+
+  // Restore your camera video in your preview in #displayvideocalls (optional, based on your preference)
   const myVideoElement = document.querySelector(`.individualsVideo[data-user-id="${myPeerId}"] video`);
   if (myVideoElement && localStream) {
     myVideoElement.srcObject = localStream;
@@ -515,7 +511,6 @@ function stopScreenShare() {
   startScreenShareBtn.disabled = false;
   stopScreenShareBtn.disabled = true;
 }
-
   
 // When someone starts screen sharing
 socket.on("screen-share-started", (sharedUserId) => {
