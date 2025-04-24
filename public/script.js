@@ -272,9 +272,9 @@ if (roomId) {
           const rawBlob = new Blob(recordedChunks, { type: mimeType });
           if (rawBlob.size > 0) {
             console.log('Raw recording completed, size:', rawBlob.size, 'bytes');
-  
-            // Process the video with the server
+            document.getElementById('loading').style.display = 'block'; // Show loading
             const processedBlob = await processVideo(rawBlob, fileName, mimeType);
+            document.getElementById('loading').style.display = 'none'; // Hide loading
             if (processedBlob) {
               const url = URL.createObjectURL(processedBlob);
               const a = document.createElement('a');
@@ -285,6 +285,7 @@ if (roomId) {
               console.log('Processed file saved successfully, size:', processedBlob.size, 'bytes');
             } else {
               console.error('Processing failed, providing raw file');
+              alert('Processing failed due to a server error. Downloading raw file instead.');
               const url = URL.createObjectURL(rawBlob);
               const a = document.createElement('a');
               a.href = url;
@@ -327,24 +328,34 @@ if (roomId) {
     const formData = new FormData();
     formData.append('video', blob, 'input.webm');
   
-    try {
-      const response = await fetch('https://ffmpegserver.onrender.com/process', {
-        method: 'POST',
-        body: formData
-      });
+    const maxRetries = 3;
+    let attempt = 0;
   
-      if (response.ok) {
-        const processedBlob = await response.blob();
-        console.log('Video processed successfully on server');
-        return processedBlob;
-      } else {
-        console.error('Server processing failed:', response.statusText);
-        return null;
+    while (attempt < maxRetries) {
+      try {
+        const response = await fetch('https://ffmpegserver.onrender.com/process', {
+          method: 'POST',
+          body: formData
+        });
+  
+        if (response.ok) {
+          const processedBlob = await response.blob();
+          console.log('Video processed successfully on server');
+          return processedBlob;
+        } else {
+          console.error('Server processing failed:', response.statusText);
+          attempt++;
+          if (attempt === maxRetries) return null;
+          await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds before retrying
+        }
+      } catch (err) {
+        console.error('Fetch error:', err);
+        attempt++;
+        if (attempt === maxRetries) return null;
+        await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds before retrying
       }
-    } catch (err) {
-      console.error('Fetch error:', err);
-      return null;
     }
+    return null;
   }
   
   // Existing event listeners for video calls and screen sharing remain unchanged...
