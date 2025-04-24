@@ -346,13 +346,13 @@ if (roomId) {
           console.error('Server processing failed:', response.statusText);
           attempt++;
           if (attempt === maxRetries) return null;
-          await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds before retrying
+          await new Promise(resolve => setTimeout(resolve, 2000));
         }
       } catch (err) {
         console.error('Fetch error:', err);
         attempt++;
         if (attempt === maxRetries) return null;
-        await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds before retrying
+        await new Promise(resolve => setTimeout(resolve, 2000));
       }
     }
     return null;
