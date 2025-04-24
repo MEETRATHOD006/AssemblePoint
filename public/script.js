@@ -367,13 +367,14 @@ if (roomId) {
   
   document.getElementById('startScreenShare').addEventListener('click', async () => {
     try {
-      const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+      const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
       const mainVideoElement = document.getElementById('mainVideo');
       if (mainVideoElement) mainVideoElement.srcObject = stream;
       document.getElementById('startScreenShare').disabled = true;
       document.getElementById('stopScreenShare').disabled = false;
     } catch (err) {
       console.error('Error starting screen share:', err);
+      alert('Permission denied to share screen. Please allow access in the browser prompt.');
     }
   });
   
