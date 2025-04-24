@@ -493,7 +493,6 @@ function stopScreenShare() {
   const videoElement = document.querySelector("#videoPlayer video");
   if (videoElement) {
     videoElement.srcObject = null; // Clear the video stream
-    videoElement.remove(); // Remove the video element
   }
   document.getElementById("videoPlayer").innerHTML = ""; // Ensure #videoPlayer is empty
 
