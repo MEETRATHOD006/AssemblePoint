@@ -176,7 +176,6 @@ if (roomId) {
     }
   }
 
-  // Add recording variables and functions
   let mediaRecorder;
   let recordedChunks = [];
   let isRecording = false;
@@ -274,7 +273,7 @@ if (roomId) {
           if (rawBlob.size > 0) {
             console.log('Raw recording completed, size:', rawBlob.size, 'bytes');
   
-            // Simulate post-processing (replace with actual FFmpeg call in production)
+            // Process the video with the server
             const processedBlob = await processVideo(rawBlob, fileName, mimeType);
             if (processedBlob) {
               const url = URL.createObjectURL(processedBlob);
@@ -323,26 +322,29 @@ if (roomId) {
     }
   });
   
-  // Placeholder function to simulate FFmpeg post-processing
+  // Updated processVideo function to use the Render server
   async function processVideo(blob, fileName, mimeType) {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = async (event) => {
-        const arrayBuffer = event.target.result;
-        const uint8Array = new Uint8Array(arrayBuffer);
+    const formData = new FormData();
+    formData.append('video', blob, 'input.webm');
   
-        // Simulate FFmpeg processing (client-side placeholder)
-        console.log('Simulating FFmpeg processing to upscale FPS to 30...');
-        // In a real scenario, send uint8Array to a server for FFmpeg processing
-        // Example server call: fetch('/process', { method: 'POST', body: uint8Array })
-        // For now, delay and return the original blob with a message
-        setTimeout(() => {
-          console.log('Processing complete (simulated)');
-          resolve(blob); // Replace with processed blob from server
-        }, 2000); // Simulate 2-second processing
-      };
-      reader.readAsArrayBuffer(blob);
-    });
+    try {
+      const response = await fetch('https://ffmpegserver.onrender.com/process', {
+        method: 'POST',
+        body: formData
+      });
+  
+      if (response.ok) {
+        const processedBlob = await response.blob();
+        console.log('Video processed successfully on server');
+        return processedBlob;
+      } else {
+        console.error('Server processing failed:', response.statusText);
+        return null;
+      }
+    } catch (err) {
+      console.error('Fetch error:', err);
+      return null;
+    }
   }
   
   // Existing event listeners for video calls and screen sharing remain unchanged...
@@ -372,6 +374,7 @@ if (roomId) {
       document.getElementById('stopScreenShare').disabled = true;
     }
   });
+  
   videoCallsbtn.addEventListener("click", () => {
     console.log("videoCall clicked");
     displayvideocallsDiv.style.display = 'grid';
