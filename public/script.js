@@ -494,7 +494,6 @@ function stopScreenShare() {
   if (videoElement) {
     videoElement.srcObject = null; // Clear the video stream
   }
-  document.getElementById("videoPlayer").innerHTML = ""; // Ensure #videoPlayer is empty
 
   // Restore your camera video in your preview in #displayvideocalls (optional, based on your preference)
   const myVideoElement = document.querySelector(`.individualsVideo[data-user-id="${myPeerId}"] video`);
