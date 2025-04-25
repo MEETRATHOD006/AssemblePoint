@@ -43,6 +43,13 @@ const roomId = getRoomIdFromURL();
 if (roomId) {
   console.log(`Joined room: ${roomId}`);
 
+  // Track if anyone in the room is screen sharing
+  let isAnyoneScreenSharing = false;
+  let screenShareRecorder;
+  let screenShareChunks = [];
+  let screenShareRecording = false;
+
+
   // Fetch chat history for the room
   fetch(`/messages/${roomId}`)
   .then(response => response.json())
@@ -524,6 +531,7 @@ socket.on("screen-share-started", (sharedUserId) => {
   bigScreen.play();
   startScreenShareBtn.disabled = true;
   stopScreenShareBtn.disabled = true;
+  isAnyoneScreenSharing = true;
 });
 
 // When screen sharing stops
@@ -534,6 +542,16 @@ socket.on("screen-share-stopped", (sharerUserId) => {
   } // Clear the screen share
   startScreenShareBtn.disabled = false;
   stopScreenShareBtn.disabled = true;
+  isAnyoneScreenSharing = false;
+
+  // Stop recording if someone is recording the shared screen
+  if (screenShareRecording) {
+    screenShareRecorder.stop();
+    screenShareRecording = false;
+    document.getElementById('RecordSS').classList.remove('on');
+    document.getElementById('RecordSS').classList.add('off');
+    document.getElementById('RecordSS').title = 'Turn on SS Recording';
+  }
 });
 
 // When a new user joins and there is an active screen share, this event is triggered
@@ -549,6 +567,7 @@ socket.on("active-screen-shared", (roomId, sharedUserId) => {
       bigScreen.play();
       startScreenShareBtn.disabled = true;
       stopScreenShareBtn.disabled = true;
+      isAnyoneScreenSharing = true;
       console.log("Big screen updated with shared video:", sharedVideoElement.srcObject);
     } else {
       // If the element is not yet available, try again in 100ms
@@ -558,7 +577,86 @@ socket.on("active-screen-shared", (roomId, sharedUserId) => {
   
   waitForVideoElement();
 });
+  
+// Record shared screen button
+document.getElementById('RecordSS').addEventListener('click', async () => {
+  const recordSSButton = document.getElementById('RecordSS');
+  
+  if (recordSSButton.classList.contains('off')) {
+    // Check if anyone is screen sharing
+    if (!isAnyoneScreenSharing) {
+      alert("No one is currently screen sharing in the room.");
+      return;
+    }
 
+    // Get the shared screen video element
+    const sharedVideo = document.querySelector('#videoPlayer video');
+    if (!sharedVideo || !sharedVideo.srcObject) {
+      console.error("No shared screen video found to record.");
+      alert("Error: Shared screen video not available.");
+      return;
+    }
+
+    const fileName = prompt("Enter a name for the screen share recording (e.g., screenshare_2025):") || `screenshare_${Date.now()}`;
+    if (!fileName) return;
+
+    // Capture the video stream
+    const videoStream = sharedVideo.srcObject;
+    const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true }).catch(err => {
+      console.warn('Audio capture failed, proceeding without audio:', err);
+      return null;
+    });
+    
+    const streams = [videoStream];
+    if (audioStream) streams.push(audioStream);
+    const combinedStream = new MediaStream(streams.flatMap(stream => [stream.getVideoTracks()[0], stream.getAudioTracks()[0]]).filter(track => track));
+
+    let mimeType = 'video/mp4; codecs=h264';
+    if (!MediaRecorder.isTypeSupported(mimeType)) {
+      console.warn('MP4 not supported, falling back to webm:', MediaRecorder.isTypeSupported('video/webm'));
+      mimeType = 'video/webm; codecs=vp9';
+    }
+
+    screenShareChunks = [];
+    screenShareRecorder = new MediaRecorder(combinedStream, { mimeType });
+    screenShareRecorder.ondataavailable = (event) => {
+      if (event.data.size > 0) screenShareChunks.push(event.data);
+    };
+    screenShareRecorder.onstop = () => {
+      const blob = new Blob(screenShareChunks, { type: mimeType });
+      if (blob.size > 0) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${fileName}.${mimeType.split(';')[0].split('/')[1]}`;
+        a.click();
+        URL.revokeObjectURL(url);
+        console.log('Screen share recording saved, size:', blob.size, 'bytes');
+      } else {
+        console.error('No data recorded, file size is 0');
+        alert('Recording failed: No data captured.');
+      }
+      if (audioStream) audioStream.getTracks().forEach(track => track.stop());
+      screenShareRecording = false;
+      recordSSButton.classList.remove('on');
+      recordSSButton.classList.add('off');
+      recordSSButton.title = 'Turn on SS Recording';
+    };
+
+    screenShareRecorder.start(33); // Record every 33ms for ~30 FPS
+    screenShareRecording = true;
+    recordSSButton.classList.remove('off');
+    recordSSButton.classList.add('on');
+    recordSSButton.title = 'Turn off SS Recording';
+    console.log('Screen share recording started, target FPS:', 30);
+  } else if (recordSSButton.classList.contains('on')) {
+    if (screenShareRecording && screenShareRecorder) {
+      screenShareRecorder.stop();
+      screenShareRecording = false;
+      console.log('Screen share recording stopped');
+    }
+  }
+});
 
   // *** Chat Functionality ***
 
