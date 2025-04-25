@@ -460,6 +460,7 @@ startScreenShareBtn.addEventListener("click", () => {
       
       startScreenShareBtn.disabled = true;
       stopScreenShareBtn.disabled = false;
+      isAnyoneScreenSharing = true;
       
     });
 });
@@ -515,6 +516,15 @@ function stopScreenShare() {
   currentScreenStream = null; // Clear the screen share stream
   startScreenShareBtn.disabled = false;
   stopScreenShareBtn.disabled = true;
+  isAnyoneScreenSharing = false;
+
+  if (screenShareRecording) {
+    screenShareRecorder.stop();
+    screenShareRecording = false;
+    document.getElementById('RecordSS').classList.remove('on');
+    document.getElementById('RecordSS').classList.add('off');
+    document.getElementById('RecordSS').title = 'Turn on SS Recording';
+  }
 }
   
 // When someone starts screen sharing
