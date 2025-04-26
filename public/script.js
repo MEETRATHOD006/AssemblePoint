@@ -430,6 +430,13 @@ startScreenShareBtn.addEventListener("click", () => {
       console.log(currentScreenStream);
       const screenTrack = screenStream.getVideoTracks()[0];
 
+      screenTrack.onended = () => {
+        console.log("Screen sharing track ended by browser");
+        if (isScreenSharing) {
+          stopScreenShareBtn.click(); // Trigger the stop screen share button
+        }
+      };
+      
       // Replace video track in all existing connections
       for (const connId in myPeer.connections) {
         const sender = myPeer.connections[connId][0].peerConnection
