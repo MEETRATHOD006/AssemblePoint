@@ -575,8 +575,10 @@ socket.on("active-screen-shared", (roomId, sharedUserId) => {
       let bigScreen = document.querySelector('#videoPlayer video');
       bigScreen.srcObject = sharedVideoElement.srcObject;
       bigScreen.play();
-      startScreenShareBtn.disabled = true;
-      stopScreenShareBtn.disabled = true;
+      if (sharedUserId !== myPeerId) {
+        startScreenShareBtn.disabled = true;
+        stopScreenShareBtn.disabled = true;
+      }
       isAnyoneScreenSharing = true;
       console.log("Big screen updated with shared video:", sharedVideoElement.srcObject);
     } else {
