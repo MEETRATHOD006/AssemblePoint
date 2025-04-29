@@ -361,13 +361,13 @@ if (roomId) {
   muteMe.addEventListener("click", () => {
     console.log("mute clicked");
     if (muteMe.className === "on"){
-      muteMe.innerHTML = `<i class="fa-solid fa-volume-xmark"></i>`
+      muteMe.innerHTML = `<i class="fa-solid fa-microphone-slash"></i>`
       muteMe.classList.remove("on");
       muteMe.classList.add("off");
 
       socket.emit("mute-user", roomId, myPeerId);
     } else {
-      muteMe.innerHTML = `<i class="fa-solid fa-volume-high"></i>`
+      muteMe.innerHTML = `<i class="fa-solid fa-microphone"></i>`
       muteMe.classList.remove("off");
       muteMe.classList.add("on");
       
