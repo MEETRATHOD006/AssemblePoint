@@ -877,6 +877,12 @@ header {
   border: 1px solid red; /* For debugging visibility */
 }
 
+@keyframes blink{
+    0%{opacity: 0;}
+    50%{opacity: .5;}
+    100%{opacity: 1;}
+}
+
 @keyframes zoomIn {
     from {
         transform: translate(-50%, -50%) scale(0.5);
