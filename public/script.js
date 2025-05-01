@@ -572,6 +572,8 @@ socket.on("screen-share-stopped", (sharerUserId) => {
     document.getElementById('RecordSS').classList.remove('on');
     document.getElementById('RecordSS').classList.add('off');
     document.getElementById('RecordSS').title = 'Turn on SS Recording';
+    document.querySelector("#RecordSS i").style.animation = ""
+    document.querySelector("#Record i").style.color = "white"
   }
 });
 
@@ -671,12 +673,16 @@ document.getElementById('RecordSS').addEventListener('click', async () => {
     recordSSButton.classList.remove('off');
     recordSSButton.classList.add('on');
     recordSSButton.title = 'Turn off SS Recording';
+    document.querySelector("#RecordSS i").style.animation = "animation: blink 1s linear infinite"
+    document.querySelector("#Record i").style.color = "red"
     console.log('Screen share recording started, target FPS:', 30);
   } else if (recordSSButton.classList.contains('on')) {
     if (screenShareRecording && screenShareRecorder) {
       screenShareRecorder.stop();
       screenShareRecording = false;
       console.log('Screen share recording stopped');
+      document.querySelector("#RecordSS i").style.animation = ""
+      document.querySelector("#Record i").style.color = "white"
     }
   }
 });
