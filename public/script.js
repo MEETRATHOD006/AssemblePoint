@@ -296,8 +296,8 @@ if (roomId) {
           recordButton.classList.remove('on');
           recordButton.classList.add('off');
           recordButton.title = 'Turn on recording';
-          document.getElementsByClassName("fa-record-viny").style.animation = ""
-          document.getElementsByClassName("fa-record-viny").style.color = "white"
+          document.querySelector("#Record i").style.animation = ""
+          document.querySelector("#Record i").style.color = "white"
         };
   
         mediaRecorder.start(33);
@@ -306,8 +306,8 @@ if (roomId) {
         recordButton.classList.remove('off');
         recordButton.classList.add('on');
         recordButton.title = 'Turn off recording';
-        document.getElementsByClassName("fa-record-viny").style.animation = "animation: blink 1s linear infinite"
-        document.getElementsByClassName("fa-record-viny").style.color = "red"
+        document.querySelector("#Record i").style.animation = "animation: blink 1s linear infinite"
+        document.querySelector("#Record i").style.color = "red"
         console.log('UI recording started with MediaRecorder, target FPS:', 30);
       }
     } else if (recordButton.classList.contains('on')) {
